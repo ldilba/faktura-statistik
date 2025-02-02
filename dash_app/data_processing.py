@@ -14,7 +14,7 @@ def load_and_clean_data(file_path="data/export20250202202626.xlsx"):
 
     # Nur relevante Zeilen behalten
     df_faktura = df[df['Auftrag/Projekt/Kst.'].notna() & df['Auftrag/Projekt/Kst.'].str.startswith(('K', 'X'))][
-        ['ProTime-Datum', 'Erfasste Menge', 'Auftrag/Projekt/Kst.', 'Positionsbezeichnung']]
+        ['ProTime-Datum', 'Erfasste Menge', 'Auftrag/Projekt/Kst.', 'Kurztext']]
 
     return df_faktura
 
@@ -39,7 +39,7 @@ def filter_data_by_date(df, start_date, end_date):
     df_filtered = df[(df['ProTime-Datum'] >= pd.to_datetime(start_date)) &
                      (df['ProTime-Datum'] <= pd.to_datetime(end_date))]
 
-    df_grouped = df_filtered.groupby(['Auftrag/Projekt/Kst.', 'Positionsbezeichnung'], as_index=False)[
+    df_grouped = df_filtered.groupby(['Auftrag/Projekt/Kst.', 'Kurztext'], as_index=False)[
         'Erfasste Menge'].sum()
 
     # Umwandlung in PT

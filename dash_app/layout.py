@@ -29,10 +29,10 @@ def create_layout():
         # Graphen unter dem DatePicker
         dbc.Row([
             dbc.Col(dcc.Graph(id='gauge-content'), width=12)
-        ]),
+        ], className="mx-2"),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(id='graph-content'), width=12)
+            dbc.Col(dcc.Graph(id='graph-content'), width=6)
         ])
     ], fluid=True)
 
