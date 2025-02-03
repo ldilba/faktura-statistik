@@ -3,8 +3,10 @@ import layout
 import callbacks
 import dash_bootstrap_components as dbc
 
+external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
+
 # Dash App initialisieren
-app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(external_scripts=external_scripts)
 
 # Layout importieren
 app.layout = layout.create_layout()
@@ -13,5 +15,5 @@ app.layout = layout.create_layout()
 callbacks.register_callbacks(app)
 
 # App starten
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run_server(debug=True)

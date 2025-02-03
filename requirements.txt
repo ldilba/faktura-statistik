@@ -1,3 +1,4 @@
 dash==2.18.2
 openpyxl==3.1.5
 dash-bootstrap-components
+black
