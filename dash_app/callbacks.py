@@ -8,10 +8,10 @@ def register_callbacks(app):
     """Registriert die Callbacks für die Dash-App."""
 
     @app.callback(
-        Output("gauge-content", "figure"),
-        Output("graph-content", "figure"),
-        Output("gauge-content", "config"),
-        Output("graph-content", "config"),
+        Output("faktura-total-content", "figure"),
+        Output("faktura-projekt-content", "figure"),
+        Output("faktura-total-content", "config"),
+        Output("faktura-projekt-content", "config"),
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
     )

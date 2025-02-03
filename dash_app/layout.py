@@ -22,19 +22,30 @@ def create_layout():
             html.Div(
                 [
                     dcc.Graph(
-                        id="gauge-content", className="!rounded-xl bg-white shadow-lg w-1/6"
+                        id="faktura-total-content", className="rounded-xl bg-white shadow-lg w-1/6"
                     )
                 ],
                 className="mx-5 flex",
             ),
-            html.Div(
-                [
-                    dcc.Graph(
-                        id="graph-content", className="!rounded-xl bg-white shadow-lg w-1/2"
-                    )
-                ],
-                className="mx-5 flex",
-            ),
+            html.Div([
+                html.Div(
+                    [
+                        dcc.Graph(
+                            id="faktura-projekt-content", className="rounded-xl bg-white shadow-lg w-full"
+                        )
+                    ],
+                    className="flex w-1/2",
+                ),
+                html.Div(
+                    [
+                        dcc.Graph(
+                            id="burndown-content", className="rounded-xl bg-white shadow-lg w-full"
+                        )
+                    ],
+                    className="flex w-1/2",
+                )
+            ], className="flex w-full gap-5 px-5"),
+
         ],
         className="w-full h-screen bg-slate-100 flex flex-col gap-4",
     )
