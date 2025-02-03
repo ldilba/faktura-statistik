@@ -1,7 +1,6 @@
 from dash import Dash
 import layout
 import callbacks
-import dash_bootstrap_components as dbc
 
 external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
 

@@ -36,7 +36,7 @@ def register_callbacks(app):
         gauge_fig.update_layout(paper_bgcolor="rgba(0,0,0,0)")
 
         gauge_fig.update_layout(
-            height=225, width=300, margin=dict(t=25, l=50, r=50, b=0)
+            height=225,  margin=dict(t=25, l=50, r=50, b=0)
         )
 
         # Balkendiagramm erstellen
@@ -49,7 +49,7 @@ def register_callbacks(app):
             template="plotly_white",
         )
 
-        bar_fig.update_layout(height=400, width=1000, paper_bgcolor="rgba(0,0,0,0)")
+        bar_fig.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)")
 
         bar_fig.update_traces(texttemplate="%{y:.2f} PT", textposition="auto")
 
