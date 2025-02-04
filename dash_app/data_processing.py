@@ -3,26 +3,60 @@ import datetime
 import os
 
 
+def split_conet_solutions(df):
+    """
+    Sucht in der Spalte 'Kurztext' nach dem Wert "Stunden - CONET Solutions GmbH".
+    Für diese Zeilen wird der 'Kurztext' durch den Inhalt der Spalte
+    'Positionsbezeichnung' ersetzt. Falls dort mehrere Projekte (z. B. kommasepariert)
+    stehen, wird in mehrere Zeilen aufgeteilt.
+    """
+    mask = df["Kurztext"] == "Stunden - CONET Solutions GmbH"
+    if "Positionsbezeichnung" in df.columns:
+        # Ersetze den 'Kurztext' mit einer Liste der Projekte, falls mehrere Projekte durch Komma getrennt sind
+        df.loc[mask, "Kurztext"] = df.loc[mask, "Positionsbezeichnung"].apply(
+            lambda x: [proj.strip() for proj in x.split(",")] if isinstance(x, str) else x
+        )
+        # Explodiere die Zeilen, sodass für jeden Eintrag ein eigener Datensatz entsteht
+        df = df.explode("Kurztext")
+    return df
+
+
 def load_and_clean_data(file_path="data/export20250202202626.xlsx"):
-    """Lädt die Excel-Datei und filtert auf Faktura-Projekte (Auftrag/Projekt/Kst. beginnt mit 'K' oder 'X')."""
+    """
+    Lädt die Excel-Datei und filtert auf Faktura-Projekte:
+    Nur Zeilen, in denen "Auftrag/Projekt/Kst." nicht NA ist und mit "K" oder "X" startet.
+    Außerdem wird für den Fall, dass in 'Kurztext' der Wert
+    "Stunden - CONET Solutions GmbH" steht, die Aufteilung anhand von 'Positionsbezeichnung' vorgenommen.
+    """
     print(os.getcwd())  # Zeigt, von welchem Verzeichnis das Skript gestartet wurde
     df = pd.read_excel(file_path)
     df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], errors="coerce")
 
-    # Nur Faktura-Projekte: Zeilen behalten, bei denen die Spalte "Auftrag/Projekt/Kst." mit "K" oder "X" beginnt
+    # Filtere zunächst Zeilen, in denen "Auftrag/Projekt/Kst." nicht NA ist und mit "K" oder "X" beginnt
     df_faktura = df[
         df["Auftrag/Projekt/Kst."].notna() &
         df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
-        ][["ProTime-Datum", "Erfasste Menge", "Auftrag/Projekt/Kst.", "Kurztext"]]
+        ]
 
+    # Wende den Split für "Stunden - CONET Solutions GmbH" an
+    df_faktura = split_conet_solutions(df_faktura)
+
+    # Spaltenauswahl (ggf. anpassen, falls weitere Spalten benötigt werden)
+    df_faktura = df_faktura[["ProTime-Datum", "Erfasste Menge", "Auftrag/Projekt/Kst.", "Kurztext"]]
     return df_faktura
 
 
 def load_all_data(file_path="data/export20250202202626.xlsx"):
-    """Lädt die Excel-Datei und bereitet sie auf – ohne die Filterung auf Faktura-Projekte."""
+    """
+    Lädt die Excel-Datei und behält alle Zeilen, in denen "Auftrag/Projekt/Kst." nicht NA ist.
+    Auch hier wird der Split für 'Stunden - CONET Solutions GmbH' vorgenommen,
+    sodass in 'Kurztext' für diese Zeilen die Projekte aus 'Positionsbezeichnung' stehen.
+    """
     df = pd.read_excel(file_path)
     df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], errors="coerce")
-    return df
+    df_all = df[df["Auftrag/Projekt/Kst."].notna()]
+    df_all = split_conet_solutions(df_all)
+    return df_all
 
 
 def get_fiscal_year_range():
@@ -40,14 +74,15 @@ def get_fiscal_year_range():
 
 def filter_data_by_date(df, start_date, end_date):
     """
-    Filtert die Daten nach Datum und gruppiert (hier für das Gauge/Balkendiagramm,
-    welches nur Faktura-Projekte verwenden soll).
+    Filtert die Daten nach einem bestimmten Zeitraum und gruppiert nach
+    ["Auftrag/Projekt/Kst.", "Kurztext"].
+    Hier wird davon ausgegangen, dass das DataFrame bereits den erforderlichen Filter
+    (Faktura-Projekte) enthält.
     """
     df_filtered = df[
         (df["ProTime-Datum"] >= pd.to_datetime(start_date)) &
         (df["ProTime-Datum"] <= pd.to_datetime(end_date))
         ]
-    # Gruppierung nach Projekt (Auftrag/Projekt/Kst. und Kurztext) und Summe der Erfassten Menge
     df_grouped = df_filtered.groupby(
         ["Auftrag/Projekt/Kst.", "Kurztext"], as_index=False
     )["Erfasste Menge"].sum()
@@ -61,33 +96,29 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
     Filtert das (komplette) Dataset nach Datum und aggregiert die 'Erfasste Menge'
     je nach gewähltem Intervall (Tag, Woche, Monat) und gruppiert zusätzlich nach Projekt (Kurztext).
     """
-    # Daten nach Datum filtern
     df_filtered = df[
         (df["ProTime-Datum"] >= pd.to_datetime(start_date)) &
         (df["ProTime-Datum"] <= pd.to_datetime(end_date))
         ]
 
-    # Frequenz festlegen
     if interval == "Tag":
         freq = "D"
     elif interval == "Woche":
         freq = "W"
     elif interval == "Monat":
-        freq = "M"
+        freq = "ME"
     else:
         freq = "D"  # Fallback
 
-    # Gruppierung nach Datum (entsprechend der Frequenz) und nach Projekt (Kurztext)
     df_agg = df_filtered.groupby(
         [pd.Grouper(key="ProTime-Datum", freq=freq), "Kurztext"]
     )["Erfasste Menge"].sum().reset_index()
-
     return df_agg
 
 
 # Globale Datenbasis:
-# df_full enthält nur Faktura-Projekte (für die anderen Diagramme)
+# df_full: nur Faktura-Projekte (wobei 'Stunden - CONET Solutions GmbH' aufgeteilt wurde)
 df_full = load_and_clean_data()
 
-# df_all enthält alle Projekte (für das gestackte Intervall-Bar-Chart)
+# df_all: alle Projekte (ebenfalls mit Aufteilung, wenn 'Stunden - CONET Solutions GmbH' vorkommt)
 df_all = load_all_data()
