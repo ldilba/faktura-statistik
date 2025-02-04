@@ -3,7 +3,7 @@ import datetime
 import os
 
 
-def split_conet_solutions(df):
+def split_allgemein(df):
     """
     Sucht in der Spalte 'Kurztext' nach dem Wert "Stunden - CONET Solutions GmbH".
     Für diese Zeilen wird der 'Kurztext' durch den Inhalt der Spalte
@@ -14,7 +14,9 @@ def split_conet_solutions(df):
     if "Positionsbezeichnung" in df.columns:
         # Ersetze den 'Kurztext' mit einer Liste der Projekte, falls mehrere Projekte durch Komma getrennt sind
         df.loc[mask, "Kurztext"] = df.loc[mask, "Positionsbezeichnung"].apply(
-            lambda x: [proj.strip() for proj in x.split(",")] if isinstance(x, str) else x
+            lambda x: (
+                [proj.strip() for proj in x.split(",")] if isinstance(x, str) else x
+            )
         )
         # Explodiere die Zeilen, sodass für jeden Eintrag ein eigener Datensatz entsteht
         df = df.explode("Kurztext")
@@ -34,15 +36,17 @@ def load_and_clean_data(file_path="data/export20250202202626.xlsx"):
 
     # Filtere zunächst Zeilen, in denen "Auftrag/Projekt/Kst." nicht NA ist und mit "K" oder "X" beginnt
     df_faktura = df[
-        df["Auftrag/Projekt/Kst."].notna() &
-        df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
-        ]
+        df["Auftrag/Projekt/Kst."].notna()
+        & df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
+    ]
 
     # Wende den Split für "Stunden - CONET Solutions GmbH" an
-    df_faktura = split_conet_solutions(df_faktura)
+    df_faktura = split_allgemein(df_faktura)
 
     # Spaltenauswahl (ggf. anpassen, falls weitere Spalten benötigt werden)
-    df_faktura = df_faktura[["ProTime-Datum", "Erfasste Menge", "Auftrag/Projekt/Kst.", "Kurztext"]]
+    df_faktura = df_faktura[
+        ["ProTime-Datum", "Erfasste Menge", "Auftrag/Projekt/Kst.", "Kurztext"]
+    ]
     return df_faktura
 
 
@@ -55,7 +59,7 @@ def load_all_data(file_path="data/export20250202202626.xlsx"):
     df = pd.read_excel(file_path)
     df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], errors="coerce")
     df_all = df[df["Auftrag/Projekt/Kst."].notna()]
-    df_all = split_conet_solutions(df_all)
+    df_all = split_allgemein(df_all)
     return df_all
 
 
@@ -80,9 +84,9 @@ def filter_data_by_date(df, start_date, end_date):
     (Faktura-Projekte) enthält.
     """
     df_filtered = df[
-        (df["ProTime-Datum"] >= pd.to_datetime(start_date)) &
-        (df["ProTime-Datum"] <= pd.to_datetime(end_date))
-        ]
+        (df["ProTime-Datum"] >= pd.to_datetime(start_date))
+        & (df["ProTime-Datum"] <= pd.to_datetime(end_date))
+    ]
     df_grouped = df_filtered.groupby(
         ["Auftrag/Projekt/Kst.", "Kurztext"], as_index=False
     )["Erfasste Menge"].sum()
@@ -97,22 +101,21 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
     je nach gewähltem Intervall (Tag, Woche, Monat) und gruppiert zusätzlich nach Projekt (Kurztext).
     """
     df_filtered = df[
-        (df["ProTime-Datum"] >= pd.to_datetime(start_date)) &
-        (df["ProTime-Datum"] <= pd.to_datetime(end_date))
-        ]
+        (df["ProTime-Datum"] >= pd.to_datetime(start_date))
+        & (df["ProTime-Datum"] <= pd.to_datetime(end_date))
+    ]
 
-    if interval == "Tag":
-        freq = "D"
-    elif interval == "Woche":
-        freq = "W"
-    elif interval == "Monat":
-        freq = "ME"
-    else:
-        freq = "D"  # Fallback
+    print(interval)
+    if interval is None or interval not in ("D", "W", "ME"):
+        interval = "D"
 
-    df_agg = df_filtered.groupby(
-        [pd.Grouper(key="ProTime-Datum", freq=freq), "Kurztext"]
-    )["Erfasste Menge"].sum().reset_index()
+    df_agg = (
+        df_filtered.groupby(
+            [pd.Grouper(key="ProTime-Datum", freq=interval), "Kurztext"]
+        )["Erfasste Menge"]
+        .sum()
+        .reset_index()
+    )
     return df_agg
 
 
