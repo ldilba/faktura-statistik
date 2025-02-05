@@ -32,7 +32,7 @@ def register_callbacks(app):
             )
         )
         gauge_fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(255,255,255,0)",
             height=225,
             margin=dict(t=25, l=50, r=50, b=0),
         )
@@ -56,10 +56,10 @@ def register_callbacks(app):
             x="Kurztext",
             y="Erfasste Menge",
             title="Tage Faktura nach Projekt",
-            labels={"Kurztext": "Projekt"},
+            labels={"Kurztext": ""},
             template="plotly_white",
         )
-        bar_fig.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)")
+        bar_fig.update_layout(height=400, paper_bgcolor="rgba(255,255,255,0)")
         bar_fig.update_traces(texttemplate="%{y:.2f} PT", textposition="auto")
         config = {"staticPlot": True}
         return bar_fig, config
@@ -116,21 +116,23 @@ def register_callbacks(app):
             go.Scatter(
                 x=df_ideal["Datum"],
                 y=df_ideal["Ideallinie"],
-                mode="lines+markers",
+                mode="lines",
                 name="Ideallinie",
-                line=dict(color="red", dash="dash"),
+                line=dict(color="red"),
             )
         )
 
         # Layout anpassen; barmode "overlay" funktioniert, da pro Tag immer nur ein Trace existiert
         fig.update_layout(
             title="Kumulative Faktura & Ideallinie",
-            xaxis_title="Datum",
+            xaxis_title="",
             yaxis_title="Kumulative Faktura (PT)",
             template="plotly_white",
             height=400,
             barmode="overlay",
         )
+
+        fig.update_layout(paper_bgcolor="rgba(255,255,255,0)")
 
         return fig
 
@@ -155,12 +157,13 @@ def register_callbacks(app):
             color="Kurztext",
             title="Stunden Übersicht",
             labels={
-                "ProTime-Datum": interval,
+                "ProTime-Datum": "",
                 "Erfasste Menge": "Stunden",
                 "Kurztext": "Projekt",
             },
+            height=400,
             template="plotly_white",
         )
-        fig.update_layout(barmode="stack", paper_bgcolor="rgba(0,0,0,0)")
+        fig.update_layout(barmode="stack", paper_bgcolor="rgba(255,255,255,0)")
         fig.update_traces(texttemplate="%{y:.2f}", textposition="auto")
         return fig

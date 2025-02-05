@@ -1,0 +1,10 @@
+.modebar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+}
+
+.modebar-group {
+    display: flex !important;
+    flex-direction: row !important;
+}

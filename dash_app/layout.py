@@ -10,52 +10,25 @@ def create_layout():
             # Datumsbereich
             html.Div(
                 [
+                    html.Div(
+                        [
+                            dcc.Upload(
+                                id="upload-data",
+                                children=html.Div(
+                                    ["Drag and Drop or ", html.A("Select File")]
+                                ),
+                                className="w-[250px] text-center py-3 cursor-pointer",
+                                accept=".xlsx",
+                            )
+                        ],
+                        className="flex items-center border border-dashed border-slate-300 hover:border-slate-700 rounded-md",
+                    ),
                     dcc.DatePickerRange(
                         id="date-picker-range",
                         start_date=fiscal_start,
                         end_date=fiscal_end,
                         display_format="YYYY-MM-DD",
-                    )
-                ],
-                className="flex justify-center mt-4",
-            ),
-            # Bestehende Graphen
-            html.Div(
-                [
-                    dcc.Graph(
-                        id="faktura-total-content",
-                        className="rounded-xl bg-white shadow-lg w-1/6",
-                    )
-                ],
-                className="mx-5 flex",
-            ),
-            html.Div(
-                [
-                    html.Div(
-                        [
-                            dcc.Graph(
-                                id="faktura-projekt-content",
-                                className="rounded-xl bg-white shadow-lg w-full",
-                            )
-                        ],
-                        className="flex w-1/2",
                     ),
-                    html.Div(
-                        [
-                            dcc.Graph(
-                                id="hours-burndown-content",
-                                className="rounded-xl bg-white shadow-lg w-full",
-                            )
-                        ],
-                        className="flex w-1/2",
-                    ),
-                ],
-                className="flex w-full gap-5 px-5",
-            ),
-            # Neuer Bereich: Dropdown zur Auswahl der Aggregation und der neue Graph
-            html.Div(
-                [
-                    html.Label("Aggregation:", className="font-semibold"),
                     dcc.Dropdown(
                         id="interval-dropdown",
                         options=[
@@ -65,19 +38,51 @@ def create_layout():
                         ],
                         value="D",
                         clearable=False,
-                        className="w-1/4",
+                        className="w-[250px]",
                     ),
                 ],
-                className="mx-5 mt-4",
+                className="flex justify-around items-center mt-4 ",
             ),
             html.Div(
                 [
                     dcc.Graph(
-                        id="interval-bar-chart",
-                        className="rounded-xl bg-white shadow-lg",
+                        id="faktura-total-content",
+                        className="rounded-xl bg-white shadow-lg w-1/6",
                     )
                 ],
-                className="mx-5 mt-2",
+                className="flex mx-5",
+            ),
+            html.Div(
+                [
+                    dcc.Graph(
+                        id="hours-burndown-content",
+                        className="rounded-xl bg-white shadow-lg w-full",
+                    )
+                ],
+                className="flex mx-5",
+            ),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id="faktura-projekt-content",
+                                className="rounded-xl bg-white shadow-lg",
+                            )
+                        ],
+                        className="w-full",
+                    ),
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id="interval-bar-chart",
+                                className="rounded-xl bg-white shadow-lg",
+                            )
+                        ],
+                        className="w-full",
+                    ),
+                ],
+                className="grid grid-cols-[1fr_2fr] gap-5 px-5 w-full",
             ),
         ],
         className="w-full bg-slate-100 flex flex-col gap-4 pb-5",
