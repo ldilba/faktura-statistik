@@ -1,6 +1,6 @@
 import pandas as pd
 import datetime
-import os
+import holidays
 
 
 def split_allgemein(df):
@@ -114,6 +114,74 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
     )
     return df_agg
 
+def get_burndown_data(df, start_date, end_date, target=160):
+    """
+    Berechnet für den gegebenen DataFrame die kumulative tatsächliche Faktura (in PT)
+    und die Ideallinie für ein (invertiertes) Burndown Chart.
+
+    Dabei wird:
+      - Der DataFrame nach dem Zeitraum [start_date, end_date] gefiltert.
+      - Die "Erfasste Menge" in PT umgerechnet (8 Stunden = 1 PT).
+      - Pro Tag die Faktura summiert und kumulativ aufsummiert.
+      - Eine Ideallinie berechnet, die auf Arbeitstagen (Mo-Fr, ohne Feiertage in NRW)
+        basiert. An diesen Tagen wird ein täglicher Zuwachs errechnet, sodass
+        insgesamt `target` PT erreicht werden.
+
+    Parameter:
+      df: DataFrame mit Faktura-Daten. Erwartet werden die Spalten "ProTime-Datum" (Datum)
+          und "Erfasste Menge" (Stunden).
+      start_date: Startdatum des Zeitraums (string oder pd.Timestamp).
+      end_date: Enddatum des Zeitraums (string oder pd.Timestamp).
+      target: Zielwert in PT (Standard: 160, entspricht 160 Faktura-Tagen).
+
+    Returns:
+      all_days: pd.DatetimeIndex aller Tage im Zeitraum.
+      actual_cum: Pandas Series mit der kumulierten tatsächlichen Faktura (in PT) pro Tag.
+      ideal_values: Liste mit der kumulativen Ideallinie (in PT) für jeden Tag.
+    """
+    # Umwandlung der Datumsangaben in pd.Timestamp
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    # Erstelle einen täglichen Datumsindex für den gesamten Zeitraum
+    all_days = pd.date_range(start=start_date, end=end_date, freq='D')
+
+    # Filtere den DataFrame nach Datum
+    mask = (df["ProTime-Datum"] >= start_date) & (df["ProTime-Datum"] <= end_date)
+    df_filtered = df.loc[mask].copy()
+
+    # Umrechnung in PT (8 Stunden = 1 PT)
+    df_filtered["Erfasste Menge"] = df_filtered["Erfasste Menge"] / 8.0
+
+    # Gruppiere die Daten pro Tag und summiere die Faktura
+    df_daily = df_filtered.groupby(pd.Grouper(key="ProTime-Datum", freq="D"))["Erfasste Menge"].sum()
+    # Alle Tage sicherstellen – fehlende Tage werden mit 0 aufgefüllt
+    df_daily = df_daily.reindex(all_days, fill_value=0)
+    # Kumulativer Fortschritt der tatsächlichen Faktura
+    actual_cum = df_daily.cumsum()
+
+    # Berechnung der Ideallinie:
+    # Bestimme alle beteiligten Jahre, um die Feiertage korrekt zu ermitteln.
+    years = list(range(start_date.year, end_date.year + 1))
+    nrw_holidays = holidays.Germany(prov='NW', years=years)
+
+    # Bestimme alle Arbeitstage (Mo-Fr, die nicht in den NRW-Feiertagen liegen)
+    working_days = [day for day in all_days if (day.weekday() < 5 and day.date() not in nrw_holidays)]
+
+    if len(working_days) == 0:
+        daily_increment = 0
+    else:
+        daily_increment = target / len(working_days)
+
+    ideal_values = []
+    cumulative = 0
+    # Für jeden Tag: Wenn Arbeitstag, füge daily_increment hinzu, sonst bleibt der Wert gleich
+    for day in all_days:
+        if day.weekday() < 5 and day.date() not in nrw_holidays:
+            cumulative += daily_increment
+        ideal_values.append(cumulative)
+
+    return all_days, actual_cum, ideal_values
 
 # === Hauptprogramm: Excel nur einmal laden ===
 

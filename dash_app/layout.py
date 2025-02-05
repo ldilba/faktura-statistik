@@ -43,7 +43,7 @@ def create_layout():
                     html.Div(
                         [
                             dcc.Graph(
-                                id="hours-overview-content",
+                                id="hours-burndown-content",
                                 className="rounded-xl bg-white shadow-lg w-full",
                             )
                         ],
