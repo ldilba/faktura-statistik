@@ -30,7 +30,6 @@ def load_and_clean_data(file_path="data/export20250202202626.xlsx"):
     Außerdem wird für den Fall, dass in 'Kurztext' der Wert
     "Stunden - CONET Solutions GmbH" steht, die Aufteilung anhand von 'Positionsbezeichnung' vorgenommen.
     """
-    print(os.getcwd())  # Zeigt, von welchem Verzeichnis das Skript gestartet wurde
     df = pd.read_excel(file_path)
     df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], errors="coerce")
 
@@ -105,7 +104,6 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
         & (df["ProTime-Datum"] <= pd.to_datetime(end_date))
     ]
 
-    print(interval)
     if interval is None or interval not in ("D", "W", "ME"):
         interval = "D"
 
@@ -121,7 +119,7 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
 
 # Globale Datenbasis:
 # df_full: nur Faktura-Projekte (wobei 'Stunden - CONET Solutions GmbH' aufgeteilt wurde)
-df_full = load_and_clean_data()
+df_faktura = load_and_clean_data()
 
 # df_all: alle Projekte (ebenfalls mit Aufteilung, wenn 'Stunden - CONET Solutions GmbH' vorkommt)
 df_all = load_all_data()
