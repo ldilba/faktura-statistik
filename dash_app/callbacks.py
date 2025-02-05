@@ -72,49 +72,51 @@ def register_callbacks(app):
         Input("date-picker-range", "end_date"),
     )
     def update_hours_burndown(start_date, end_date):
-        # Verwenden Sie den Faktura-DataFrame (sollte bereits in data_processing.df_faktura vorhanden sein)
-        df = data_processing.df_faktura.copy()
+        # Nutzen Sie für die tatsächliche Faktura ausschließlich df_faktura
+        df_fact = data_processing.df_faktura.copy()
+        # Für die Abwesenheitsdaten verwenden Sie df_all (enthält auch Positionsbezeichnung)
+        df_all = data_processing.df_all.copy()
 
-        # Berechne alle benötigten Daten für das Burndown Chart
-        all_days, actual_cum, ideal_values = data_processing.get_burndown_data(df, start_date, end_date)
+        # Berechne alle benötigten Werte (Tage, tatsächliche kumulative Faktura und Ideallinie)
+        all_days, actual_cum, ideal_values = data_processing.get_burndown_data(
+            df_fact, df_all, start_date, end_date
+        )
 
-        # Erstelle DataFrames für die beiden Diagramme:
-        df_actual = pd.DataFrame({
-            "Datum": all_days,
-            "Tatsächliche Faktura": actual_cum.values
-        })
-        df_ideal = pd.DataFrame({
-            "Datum": all_days,
-            "Ideallinie": ideal_values
-        })
+        # DataFrames für Plotly Express
+        df_actual = pd.DataFrame(
+            {"Datum": all_days, "Tatsächliche Faktura": actual_cum.values}
+        )
+        df_ideal = pd.DataFrame({"Datum": all_days, "Ideallinie": ideal_values})
 
-        # Erstelle den Balken-Plot für die tatsächliche kumulative Faktura
+        # Balken-Plot für die tatsächliche Faktura
         fig = px.bar(
             df_actual,
             x="Datum",
             y="Tatsächliche Faktura",
             title="Kumulative Faktura & Ideallinie",
-            labels={"Datum": "Datum", "Tatsächliche Faktura": "Kumulative Faktura (PT)"}
+            labels={
+                "Datum": "Datum",
+                "Tatsächliche Faktura": "Kumulative Faktura (PT)",
+            },
         )
 
-        # Erstelle den Linien-Plot für die Ideallinie mit Markern an jedem Tag
+        # Linien-Plot für die Ideallinie (in Rot mit Markern)
         fig_line = px.line(
             df_ideal,
             x="Datum",
             y="Ideallinie",
             markers=True,
             labels={"Datum": "Datum", "Ideallinie": "Ideallinie (PT)"},
-            color_discrete_sequence=["red"]
+            color_discrete_sequence=["red"],
         )
 
-        # Füge die Linien-Daten in das bestehende Balkendiagramm ein
+        # Füge den Linien-Trace dem Balkendiagramm hinzu
         for trace in fig_line.data:
             fig.add_trace(trace)
 
-        # Layout-Anpassungen
         fig.update_layout(template="plotly_white", height=400)
-
         return fig
+
     # -------------------------------------------------------------------------
     # Callback für das gestapelte Intervall-Balkendiagramm (alle Projekte)
     @app.callback(
