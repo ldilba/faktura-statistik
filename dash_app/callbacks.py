@@ -72,49 +72,53 @@ def register_callbacks(app):
         Input("date-picker-range", "end_date"),
     )
     def update_hours_burndown(start_date, end_date):
-        # Nutzen Sie für die tatsächliche Faktura ausschließlich df_faktura
+        # Nutzen Sie hier für die tatsächlichen Faktura-Daten ausschließlich df_faktura
         df_fact = data_processing.df_faktura.copy()
-        # Für die Abwesenheitsdaten verwenden Sie df_all (enthält auch Positionsbezeichnung)
+        # Für Abwesenheitsinformationen verwenden Sie df_all (enthält z. B. "Positionsbezeichnung")
         df_all = data_processing.df_all.copy()
 
-        # Berechne alle benötigten Werte (Tage, tatsächliche kumulative Faktura und Ideallinie)
-        all_days, actual_cum, ideal_values = data_processing.get_burndown_data(
-            df_fact, df_all, start_date, end_date
-        )
+        # Berechne alle benötigten Werte inkl. des Bar-DataFrames
+        all_days, actual_cum, ideal_values, df_bar = data_processing.get_burndown_data(df_fact, df_all, start_date,
+                                                                                       end_date)
 
-        # DataFrames für Plotly Express
-        df_actual = pd.DataFrame(
-            {"Datum": all_days, "Tatsächliche Faktura": actual_cum.values}
-        )
-        df_ideal = pd.DataFrame({"Datum": all_days, "Ideallinie": ideal_values})
+        # Erstelle den Figure-Container
+        fig = go.Figure()
 
-        # Balken-Plot für die tatsächliche Faktura
-        fig = px.bar(
-            df_actual,
-            x="Datum",
-            y="Tatsächliche Faktura",
+        # Balken-Trace: tatsächliche Faktura mit individuellen Farben und Opacity
+        fig.add_trace(go.Bar(
+            x=df_bar["Datum"],
+            y=df_bar["Tatsächliche Faktura"],
+            marker_color=df_bar["color"],
+            marker_opacity=df_bar["opacity"],
+            name="Tatsächliche Faktura",
+            text=[f"{val:.2f} PT" for val in df_bar["Tatsächliche Faktura"]],
+            textposition="auto"
+        ))
+
+        # DataFrame für die Ideallinie
+        df_ideal = pd.DataFrame({
+            "Datum": all_days,
+            "Ideallinie": ideal_values
+        })
+
+        # Linie-Trace: Ideallinie in Rot mit Markern an jedem Tag
+        fig.add_trace(go.Scatter(
+            x=df_ideal["Datum"],
+            y=df_ideal["Ideallinie"],
+            mode="lines+markers",
+            name="Ideallinie",
+            line=dict(color="red", dash="dash")
+        ))
+
+        # Layout-Anpassungen
+        fig.update_layout(
             title="Kumulative Faktura & Ideallinie",
-            labels={
-                "Datum": "Datum",
-                "Tatsächliche Faktura": "Kumulative Faktura (PT)",
-            },
+            xaxis_title="Datum",
+            yaxis_title="Kumulative Faktura (PT)",
+            template="plotly_white",
+            height=400
         )
 
-        # Linien-Plot für die Ideallinie (in Rot mit Markern)
-        fig_line = px.line(
-            df_ideal,
-            x="Datum",
-            y="Ideallinie",
-            markers=True,
-            labels={"Datum": "Datum", "Ideallinie": "Ideallinie (PT)"},
-            color_discrete_sequence=["red"],
-        )
-
-        # Füge den Linien-Trace dem Balkendiagramm hinzu
-        for trace in fig_line.data:
-            fig.add_trace(trace)
-
-        fig.update_layout(template="plotly_white", height=400)
         return fig
 
     # -------------------------------------------------------------------------
