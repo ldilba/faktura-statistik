@@ -102,7 +102,8 @@ def register_callbacks(app):
                         ],  # alle Werte in der Gruppe haben dieselbe Farbe
                         marker_opacity=dfg[
                             "opacity"
-                        ].tolist(),  # individuelle Opacity pro Balken
+                        ].tolist(),# individuelle Opacity pro Balken
+                        width=86400000 * 0.9,
                         text=[f"{val:.2f} PT" for val in dfg["Tatsächliche Faktura"]],
                         textposition="auto",
                     )
