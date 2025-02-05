@@ -70,7 +70,7 @@ def create_layout():
                                 className="rounded-xl bg-white shadow-lg",
                             )
                         ],
-                        className="w-full",
+                        className="w-full min-w-0",
                     ),
                     html.Div(
                         [
@@ -79,10 +79,10 @@ def create_layout():
                                 className="rounded-xl bg-white shadow-lg",
                             )
                         ],
-                        className="w-full",
+                        className="w-full min-w-0",
                     ),
                 ],
-                className="grid grid-cols-[1fr_2fr] gap-5 px-5 w-full",
+                className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-5 px-5 w-full",
             ),
         ],
         className="w-full bg-slate-100 flex flex-col gap-4 pb-5",
