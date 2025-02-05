@@ -72,7 +72,7 @@ def register_callbacks(app):
             x="ProTime-Datum",
             y="Erfasste Menge",
             color="Kurztext",
-            title=f"Stunden aggregiert nach {interval} und Projekt",
+            title=f"Stunden übersicht",
             labels={
                 "ProTime-Datum": interval,
                 "Erfasste Menge": "Stunden",
