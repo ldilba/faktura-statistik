@@ -269,6 +269,7 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
 
     return all_days, actual_cum, ideal_values, df_bar
 
+
 def get_available_days(df_all, start_date, end_date):
     """
     Gibt die Anzahl *verfügbarer* Arbeitstage (Mo–Fr, keine Feiertage in NRW,
@@ -276,27 +277,27 @@ def get_available_days(df_all, start_date, end_date):
     """
     # Pandas Timestamps
     start_date = pd.to_datetime(start_date).normalize()
-    end_date   = pd.to_datetime(end_date).normalize()
+    end_date = pd.to_datetime(end_date).normalize()
 
     # Erstelle einen täglichen Datumsindex
     all_days = pd.date_range(start=start_date, end=end_date, freq="D")
 
     # 1) Urlaub / Krank-Tage herausfinden
     absent_urlaub = set()
-    absent_krank  = set()
+    absent_krank = set()
 
     if "Positionsbezeichnung" in df_all.columns:
         vacation_rows = df_all.loc[
-            (df_all["Positionsbezeichnung"] == "Urlaub") &
-            (df_all["ProTime-Datum"] >= start_date) &
-            (df_all["ProTime-Datum"] <= end_date)
+            (df_all["Positionsbezeichnung"] == "Urlaub")
+            & (df_all["ProTime-Datum"] >= start_date)
+            & (df_all["ProTime-Datum"] <= end_date)
         ]
         absent_urlaub = set(vacation_rows["ProTime-Datum"].dt.normalize())
 
         krank_rows = df_all.loc[
-            (df_all["Positionsbezeichnung"] == "Krank") &
-            (df_all["ProTime-Datum"] >= start_date) &
-            (df_all["ProTime-Datum"] <= end_date)
+            (df_all["Positionsbezeichnung"] == "Krank")
+            & (df_all["ProTime-Datum"] >= start_date)
+            & (df_all["ProTime-Datum"] <= end_date)
         ]
         absent_krank = set(krank_rows["ProTime-Datum"].dt.normalize())
 
@@ -308,13 +309,16 @@ def get_available_days(df_all, start_date, end_date):
     # 3) Zähle verfügbare Tage
     available_count = 0
     for day in all_days:
-        if (day.weekday() < 5  # Mo–Fr
+        if (
+            day.weekday() < 5  # Mo–Fr
             and day not in holiday_dates
             and day not in absent_urlaub
-            and day not in absent_krank):
+            and day not in absent_krank
+        ):
             available_count += 1
 
     return available_count
+
 
 # === Hauptprogramm: Excel nur einmal laden ===
 

@@ -1,11 +1,13 @@
+import datetime
+
 from dash import Output, Input
 import plotly.express as px
 import plotly.graph_objects as go
 import data_processing
 import pandas as pd
 
-
 YEAR_TARGET_PT = 160.0
+
 
 def register_callbacks(app):
     """Registriert die einzelnen Graph-Callbacks für die Dash-App."""
@@ -35,11 +37,85 @@ def register_callbacks(app):
         )
         gauge_fig.update_layout(
             paper_bgcolor="rgba(255,255,255,0)",
-            height=225,
+            # height=225,
             margin=dict(t=25, l=50, r=50, b=0),
         )
         config = {"staticPlot": True}
         return gauge_fig, config
+
+    @app.callback(
+        Output("faktura-daily-avg-pt-content", "figure"),
+        Output("faktura-daily-avg-pt-content", "config"),
+        Output("faktura-daily-avg-hours-content", "figure"),
+        Output("faktura-daily-avg-hours-content", "config"),
+        Input("date-picker-range", "start_date"),
+        Input("date-picker-range", "end_date"),
+    )
+    def update_faktura_daily_needed(start_date, end_date):
+        # 1) Summe der bisher geleisteten Faktura ermitteln
+        df_faktura = data_processing.df_faktura.copy()
+        df_grouped = data_processing.filter_data_by_date(
+            df_faktura, start_date, end_date
+        )
+        faktura_sum = df_grouped["Erfasste Menge"].sum()
+
+        # 2) Wie viele PT fehlen noch, um auf das Jahresziel (z.B. 160) zu kommen?
+        remaining_pt = YEAR_TARGET_PT - faktura_sum
+        if remaining_pt < 0:
+            remaining_pt = 0  # Falls schon über 160
+
+        # 3) Berechne die noch verfügbaren Arbeitstage
+        df_all = data_processing.df_all.copy()
+        today = datetime.date.today()
+        end_date_date = pd.to_datetime(end_date).date()
+
+        if end_date_date < today:
+            remaining_days = 0
+        else:
+            remaining_days = data_processing.get_available_days(
+                df_all, start_date=today, end_date=end_date_date
+            )
+
+        if remaining_days > 0:
+            daily_needed_pt = remaining_pt / remaining_days
+        else:
+            daily_needed_pt = 0
+
+        # Figure 1: PT pro Tag
+        fig_pt = go.Figure()
+        fig_pt.add_trace(
+            go.Indicator(
+                mode="number",
+                value=daily_needed_pt,
+                title={"text": "Ø PT pro Tag (Rest)", "font": {"size": 18}},
+                number={"font": {"size": 35}},
+            )
+        )
+        fig_pt.update_layout(
+            height=100,
+            paper_bgcolor="rgba(255,255,255,0)",
+            margin=dict(t=75, l=50, r=50, b=50)
+        )
+
+        # Figure 2: Stunden pro Tag
+        fig_hours = go.Figure()
+        fig_hours.add_trace(
+            go.Indicator(
+                mode="number",
+                value=daily_needed_pt * 8,
+                title={"text": "Ø Stunden pro Tag (Rest)", "font": {"size": 18}},
+                number={"font": {"size": 35}},
+            )
+        )
+        fig_hours.update_layout(
+            height=100,
+            paper_bgcolor="rgba(255,255,255,0)",
+            margin=dict(t=75, l=50, r=50, b=50)
+        )
+
+        config = {"staticPlot": True}
+
+        return fig_pt, config, fig_hours, config
 
     # -------------------------------------------------------------------------
     # Callback für das projektbezogene Balkendiagramm (Faktura Projekte)
@@ -86,13 +162,19 @@ def register_callbacks(app):
         df_all = data_processing.df_all.copy()
 
         # 2) Gesamt-Verfügbarkeit im Geschäftsjahr ermitteln
-        fy_start, fy_end = data_processing.get_fiscal_year_range()  # z.B. 2024-04-01 bis 2025-03-31
-        total_available_fy = data_processing.get_available_days(df_all, fy_start, fy_end)
+        fy_start, fy_end = (
+            data_processing.get_fiscal_year_range()
+        )  # z.B. 2024-04-01 bis 2025-03-31
+        total_available_fy = data_processing.get_available_days(
+            df_all, fy_start, fy_end
+        )
         if total_available_fy == 0:
             total_available_fy = 1  # Edge Case vermeiden
 
         # 3) Verfügbare Tage im ausgewählten Bereich
-        subrange_available = data_processing.get_available_days(df_all, start_date, end_date)
+        subrange_available = data_processing.get_available_days(
+            df_all, start_date, end_date
+        )
 
         # 4) Dynamische Ziel-Berechnung (PT)
         #    daily_rate = YEAR_TARGET_PT / verfügbare GJ-Tage => multipliziert mit verfügbaren Tagen im Sub-Bereich
@@ -101,19 +183,13 @@ def register_callbacks(app):
 
         # 5) Burndown-Daten (täglich) mit dynamischem Ziel berechnen
         all_days, actual_cum, ideal_values, df_bar = data_processing.get_burndown_data(
-            df_fact,
-            df_all,
-            start_date,
-            end_date,
-            target=dynamic_target
+            df_fact, df_all, start_date, end_date, target=dynamic_target
         )
 
         # 6) DataFrames für (optionales) Resampling vorbereiten
-        df_lines = pd.DataFrame({
-            "Datum": all_days,
-            "actual_cum": actual_cum.values,
-            "ideal": ideal_values
-        }).set_index("Datum")
+        df_lines = pd.DataFrame(
+            {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values}
+        ).set_index("Datum")
 
         df_bar = df_bar.set_index("Datum")
 
@@ -143,7 +219,13 @@ def register_callbacks(app):
         # a) Balken-Traces
         if interval == "D":
             # --- Tägliche Ansicht: verschiedene Farben je nach day_type ---
-            group_order = ["Wochenende", "Urlaub", "Krankheit", "Feiertag", "Arbeitstag"]
+            group_order = [
+                "Wochenende",
+                "Urlaub",
+                "Krankheit",
+                "Feiertag",
+                "Arbeitstag",
+            ]
             for grp in group_order:
                 dfg = df_bar_res[df_bar_res["group"] == grp]
                 if not dfg.empty:
@@ -152,9 +234,14 @@ def register_callbacks(app):
                             x=dfg["Datum"],
                             y=dfg["Tatsächliche Faktura"],
                             name=grp,
-                            marker_color=dfg["color"].iloc[0],  # alle in grp identische Farbe
-                            marker_opacity=dfg["opacity"].tolist(),  # jede Zeile eigene Opacity
-                            width=86400000 * 0.9,  # 1 Tag = 86400000 ms => balken etwas schmaler
+                            marker_color=dfg["color"].iloc[
+                                0
+                            ],  # alle in grp identische Farbe
+                            marker_opacity=dfg[
+                                "opacity"
+                            ].tolist(),  # jede Zeile eigene Opacity
+                            width=86400000
+                            * 0.9,  # 1 Tag = 86400000 ms => balken etwas schmaler
                         )
                     )
         else:

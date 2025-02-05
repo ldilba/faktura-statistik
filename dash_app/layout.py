@@ -15,7 +15,12 @@ def create_layout():
                             dcc.Upload(
                                 id="upload-data",
                                 children=html.Div(
-                                    ["Drag and Drop or ", html.A("Select File")]
+                                    [
+                                        "Drag and Drop or ",
+                                        html.A(
+                                            "Select File", className="text-blue-500"
+                                        ),
+                                    ]
                                 ),
                                 className="w-[250px] text-center py-3 cursor-pointer",
                                 accept=".xlsx",
@@ -27,7 +32,7 @@ def create_layout():
                         id="date-picker-range",
                         start_date=fiscal_start,
                         end_date=fiscal_end,
-                        display_format="YYYY-MM-DD",
+                        display_format="DD.MM.YYYY",
                     ),
                     dcc.Dropdown(
                         id="interval-dropdown",
@@ -47,10 +52,23 @@ def create_layout():
                 [
                     dcc.Graph(
                         id="faktura-total-content",
-                        className="rounded-xl bg-white shadow-lg w-1/6",
-                    )
+                        className="rounded-xl bg-white shadow-lg w-1/6 h-[14rem]",
+                    ),
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id="faktura-daily-avg-pt-content",
+                                className="rounded-xl bg-white shadow-lg h-[6.5rem]",
+                            ),
+                            dcc.Graph(
+                                id="faktura-daily-avg-hours-content",
+                                className="rounded-xl bg-white shadow-lg h-[6.5rem]",
+                            ),
+                        ],
+                        className="flex flex-col gap-4 w-1/6",
+                    ),
                 ],
-                className="flex mx-5",
+                className="flex mx-5 gap-5",
             ),
             html.Div(
                 [
