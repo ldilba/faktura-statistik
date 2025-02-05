@@ -5,6 +5,8 @@ import data_processing
 import pandas as pd
 
 
+YEAR_TARGET_PT = 160.0
+
 def register_callbacks(app):
     """Registriert die einzelnen Graph-Callbacks für die Dash-App."""
 
@@ -73,127 +75,122 @@ def register_callbacks(app):
         Input("interval-dropdown", "value"),
     )
     def update_hours_burndown(start_date, end_date, interval):
-        # 1) Hol dir die täglichen Daten über deine vorhandene Funktion:
+        """
+        Callback, der den kumulativen Burndown-Chart (Faktura vs. Ideallinie) zurückgibt,
+        inklusive dynamischer Anpassung des Ziels (Ideallinie) je nach ausgewähltem Zeitbereich
+        und optionaler Wochen-/Monatsaggregation.
+        """
+
+        # 1) Hole Faktura- und All-Daten
         df_fact = data_processing.df_faktura.copy()
         df_all = data_processing.df_all.copy()
 
+        # 2) Gesamt-Verfügbarkeit im Geschäftsjahr ermitteln
+        fy_start, fy_end = data_processing.get_fiscal_year_range()  # z.B. 2024-04-01 bis 2025-03-31
+        total_available_fy = data_processing.get_available_days(df_all, fy_start, fy_end)
+        if total_available_fy == 0:
+            total_available_fy = 1  # Edge Case vermeiden
+
+        # 3) Verfügbare Tage im ausgewählten Bereich
+        subrange_available = data_processing.get_available_days(df_all, start_date, end_date)
+
+        # 4) Dynamische Ziel-Berechnung (PT)
+        #    daily_rate = YEAR_TARGET_PT / verfügbare GJ-Tage => multipliziert mit verfügbaren Tagen im Sub-Bereich
+        daily_rate = YEAR_TARGET_PT / total_available_fy
+        dynamic_target = daily_rate * subrange_available
+
+        # 5) Burndown-Daten (täglich) mit dynamischem Ziel berechnen
         all_days, actual_cum, ideal_values, df_bar = data_processing.get_burndown_data(
-            df_fact, df_all, start_date, end_date, target=160
+            df_fact,
+            df_all,
+            start_date,
+            end_date,
+            target=dynamic_target
         )
 
-        # 2) Baue einen DataFrame für die Liniendaten (kumulative Ist & Ideal):
-        df_lines = pd.DataFrame(
-            {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values}
-        )
-        df_lines.set_index("Datum", inplace=True)
+        # 6) DataFrames für (optionales) Resampling vorbereiten
+        df_lines = pd.DataFrame({
+            "Datum": all_days,
+            "actual_cum": actual_cum.values,
+            "ideal": ideal_values
+        }).set_index("Datum")
 
-        # 3) Setze auch df_bar auf einen Datumsindex:
-        df_bar.set_index("Datum", inplace=True)
+        df_bar = df_bar.set_index("Datum")
 
-        # 4) Falls dein interval in data_processing "ME" heißt, musst du eine
-        #    Frequenz definieren, die pandas versteht.
-        #    Typisch wäre "W" = wöchentlich (Sonntags als Periodenende),
-        #    "M" = monatlich (Monatsende).
-        #
-        #    Wenn du explizit "ME" (Month End) nutzen willst, kannst du das
-        #    Mapping so regeln:
+        # Frequenzen mappen (pandas-Resample-String)
         freq_map = {
-            "D": None,  # daily => keine Resample-Änderung
-            "W": "W",  # wöchentlicher Resample (Periodenende ist Sonntag)
-            "ME": "ME",  # "Month End" in pandas = "ME"
+            "D": None,  # daily
+            "W": "W",  # weekly
+            "ME": "M",  # monthly (Month End)
         }
         freq = freq_map.get(interval, None)
 
-        # 5) Wenn interval = D, dann bleiben wir daily.
-        #    Wenn interval = W oder ME, machen wir ein Resampling => wir holen
-        #    uns jeweils den letzten kumulativen Wert pro Periode (last).
+        # 7) Falls W oder ME gewählt, resample auf "letzten" Tageswert je Periode
         if freq is not None:
-            # Liniendaten resamplen
-            df_lines_resampled = df_lines.resample(freq).last().dropna(how="all")
-
-            # Für die Balken:
-            df_bar_resampled = df_bar.resample(freq).last().dropna(how="all")
+            df_lines_res = df_lines.resample(freq).last().dropna(how="all")
+            df_bar_res = df_bar.resample(freq).last().dropna(how="all")
         else:
-            # daily
-            df_lines_resampled = df_lines
-            df_bar_resampled = df_bar
+            df_lines_res = df_lines
+            df_bar_res = df_bar
 
-        # Um später erneut die x-Achse etc. zuzugreifen,
-        # holen wir uns wieder eine "Datum"-Spalte:
-        df_lines_resampled = df_lines_resampled.reset_index()
-        df_bar_resampled = df_bar_resampled.reset_index()
+        # Zurück in Spaltenform (für Plotly):
+        df_lines_res = df_lines_res.reset_index()
+        df_bar_res = df_bar_res.reset_index()
 
-        # 6) Erstelle die Plotly-Figur
+        # 8) Plotly-Figure erstellen
         fig = go.Figure()
 
-        # ============= A) Balken-Traces =============
-
-        # Bei "D" (täglicher Anzeige) willst du wahrscheinlich weiterhin
-        # mehrere Gruppen (Wochenende, Urlaub, Krank, Feiertag, Arbeitstag)
-        # unterschiedlich einfärben.
-        # Bei wöchentlicher / monatlicher Verdichtung macht
-        # eine Tag-zu-Tag-Farbe oft weniger Sinn,
-        # weil du jetzt nur 1 Balken pro Woche/Monat hast.
-        # Du kannst deshalb bspw. bedingt den Code anpassen:
-
+        # a) Balken-Traces
         if interval == "D":
-            # Definierte Reihenfolge für die Legende:
-            group_order = [
-                "Wochenende",
-                "Urlaub",
-                "Krankheit",
-                "Feiertag",
-                "Arbeitstag",
-            ]
+            # --- Tägliche Ansicht: verschiedene Farben je nach day_type ---
+            group_order = ["Wochenende", "Urlaub", "Krankheit", "Feiertag", "Arbeitstag"]
             for grp in group_order:
-                dfg = df_bar_resampled[df_bar_resampled["group"] == grp]
+                dfg = df_bar_res[df_bar_res["group"] == grp]
                 if not dfg.empty:
                     fig.add_trace(
                         go.Bar(
                             x=dfg["Datum"],
                             y=dfg["Tatsächliche Faktura"],
                             name=grp,
-                            marker_color=dfg["color"].iloc[0],
-                            marker_opacity=dfg["opacity"].tolist(),
-                            width=86400000 * 0.9,  # etwas schmaler als 1 Tag
+                            marker_color=dfg["color"].iloc[0],  # alle in grp identische Farbe
+                            marker_opacity=dfg["opacity"].tolist(),  # jede Zeile eigene Opacity
+                            width=86400000 * 0.9,  # 1 Tag = 86400000 ms => balken etwas schmaler
                         )
                     )
         else:
-            # z.B. nur *einen* Balkentrace (kumulative Faktura) ohne Tagtyp-Färbung
+            # --- Wöchentliche/Monatliche Ansicht: 1 Balken-Trace (nur kumulative Faktura) ---
             fig.add_trace(
                 go.Bar(
-                    x=df_bar_resampled["Datum"],
-                    y=df_bar_resampled["Tatsächliche Faktura"],
+                    x=df_bar_res["Datum"],
+                    y=df_bar_res["Tatsächliche Faktura"],
                     name="Kumulierte Faktura",
                     marker_color="#1f77b4",
+                    opacity=0.9,
                 )
             )
 
-        # ============= B) Linien-Traces (Ist & Ideal) =============
-        # Du nutzt bisher nur die "Ideallinie". Falls du "Tatsächliche Faktura"
-        # auch als Linie hättest, könntest du sie hier ebenfalls hinzufügen.
-        # Aktuell reicht der "Ideallinie"-Trace:
-
+        # b) Ideallinie-Trace
         fig.add_trace(
             go.Scatter(
-                x=df_lines_resampled["Datum"],
-                y=df_lines_resampled["ideal"],
+                x=df_lines_res["Datum"],
+                y=df_lines_res["ideal"],
                 mode="lines",
                 name="Ideallinie",
-                line=dict(color="red"),  # dash="dot" oder so
+                line=dict(color="red"),  # gestrichelt, z.B.
             )
         )
 
-        # ============= Layout-Einstellungen =============
+        # c) Layout
         fig.update_layout(
-            title=f"Kumulative Faktura & Ideallinie",
+            title=f"Kumulative Faktura & Ideallinie ({interval})",
             xaxis_title="",
             yaxis_title="Kumulative Faktura (PT)",
             template="plotly_white",
             height=500,
-            barmode="overlay",
+            barmode="overlay",  # Balken übereinander (nicht gestapelt)
+            legend=dict(itemsizing="constant"),
         )
-
+        # Hintergrund ggf. transparent
         fig.update_layout(paper_bgcolor="rgba(255,255,255,0)")
 
         return fig
