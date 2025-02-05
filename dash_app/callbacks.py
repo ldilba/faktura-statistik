@@ -72,51 +72,64 @@ def register_callbacks(app):
         Input("date-picker-range", "end_date"),
     )
     def update_hours_burndown(start_date, end_date):
-        # Nutzen Sie hier für die tatsächlichen Faktura-Daten ausschließlich df_faktura
+        # Nutzen Sie für die tatsächlichen Faktura-Daten ausschließlich df_faktura
         df_fact = data_processing.df_faktura.copy()
-        # Für Abwesenheitsinformationen verwenden Sie df_all (enthält z. B. "Positionsbezeichnung")
+        # Für Abwesenheitsinformationen verwenden Sie df_all (enthält z. B. "Positionsbezeichnung")
         df_all = data_processing.df_all.copy()
 
         # Berechne alle benötigten Werte inkl. des Bar-DataFrames
-        all_days, actual_cum, ideal_values, df_bar = data_processing.get_burndown_data(df_fact, df_all, start_date,
-                                                                                       end_date)
+        all_days, actual_cum, ideal_values, df_bar = data_processing.get_burndown_data(
+            df_fact, df_all, start_date, end_date
+        )
 
         # Erstelle den Figure-Container
         fig = go.Figure()
 
-        # Balken-Trace: tatsächliche Faktura mit individuellen Farben und Opacity
-        fig.add_trace(go.Bar(
-            x=df_bar["Datum"],
-            y=df_bar["Tatsächliche Faktura"],
-            marker_color=df_bar["color"],
-            marker_opacity=df_bar["opacity"],
-            name="Tatsächliche Faktura",
-            text=[f"{val:.2f} PT" for val in df_bar["Tatsächliche Faktura"]],
-            textposition="auto"
-        ))
+        # Definierte Reihenfolge der Gruppen für die Legende
+        group_order = ["Wochenende", "Urlaub", "Krankheit", "Feiertag", "Arbeitstag"]
 
-        # DataFrame für die Ideallinie
-        df_ideal = pd.DataFrame({
-            "Datum": all_days,
-            "Ideallinie": ideal_values
-        })
+        # Für jede Gruppe einen eigenen Bar-Trace hinzufügen
+        for grp in group_order:
+            dfg = df_bar[df_bar["group"] == grp]
+            if not dfg.empty:
+                fig.add_trace(
+                    go.Bar(
+                        x=dfg["Datum"],
+                        y=dfg["Tatsächliche Faktura"],
+                        name=grp,
+                        marker_color=dfg["color"].iloc[
+                            0
+                        ],  # alle Werte in der Gruppe haben dieselbe Farbe
+                        marker_opacity=dfg[
+                            "opacity"
+                        ].tolist(),  # individuelle Opacity pro Balken
+                        text=[f"{val:.2f} PT" for val in dfg["Tatsächliche Faktura"]],
+                        textposition="auto",
+                    )
+                )
 
-        # Linie-Trace: Ideallinie in Rot mit Markern an jedem Tag
-        fig.add_trace(go.Scatter(
-            x=df_ideal["Datum"],
-            y=df_ideal["Ideallinie"],
-            mode="lines+markers",
-            name="Ideallinie",
-            line=dict(color="red", dash="dash")
-        ))
+        # Ideallinie-Daten vorbereiten
+        df_ideal = pd.DataFrame({"Datum": all_days, "Ideallinie": ideal_values})
 
-        # Layout-Anpassungen
+        # Füge den Linien-Trace für die Ideallinie hinzu (rot, gestrichelt, mit Markern)
+        fig.add_trace(
+            go.Scatter(
+                x=df_ideal["Datum"],
+                y=df_ideal["Ideallinie"],
+                mode="lines+markers",
+                name="Ideallinie",
+                line=dict(color="red", dash="dash"),
+            )
+        )
+
+        # Layout anpassen; barmode "overlay" funktioniert, da pro Tag immer nur ein Trace existiert
         fig.update_layout(
             title="Kumulative Faktura & Ideallinie",
             xaxis_title="Datum",
             yaxis_title="Kumulative Faktura (PT)",
             template="plotly_white",
-            height=400
+            height=400,
+            barmode="overlay",
         )
 
         return fig

@@ -121,74 +121,68 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
       - Die kumulative tatsächliche Faktura (in PT) basierend auf df_faktura.
       - Die dynamisch berechnete Ideallinie (in PT), wobei Abwesenheitstage
         (Urlaub/Krank) sowie Feiertage und Wochenenden berücksichtigt werden.
-      - Ein DataFrame mit zusätzlichen Informationen (Datum, Tagestyp, Farbe, Opacity)
-        für den Balken-Plot.
-
-    Parameter:
-      df_faktura: DataFrame mit Faktura-Daten (z. B. wie in get_faktura_projects),
-                  aus denen die tatsächlich geleistete Faktura berechnet wird.
-      df_all: DataFrame mit allen Projekten (enthält u.a. "Positionsbezeichnung"),
-              um Abwesenheitstage (Urlaub/Krank) zu erkennen.
-      start_date, end_date: Zeitraum (string oder pd.Timestamp).
-      target: Zielwert in PT (Standard: 160).
-
-    Returns:
-      all_days: pd.DatetimeIndex aller Tage im Zeitraum.
-      actual_cum: Series mit der kumulativen, tatsächlichen Faktura (in PT) pro Tag.
-      ideal_values: Liste mit den dynamisch berechneten kumulativen Idealwerten (in PT).
-      df_bar: DataFrame mit Spalten "Datum", "Tatsächliche Faktura", "day_type", "color", "opacity"
-              zur individuellen Formatierung der Balken.
+      - Ein DataFrame (df_bar) mit zusätzlichen Informationen (Datum, Tagestyp,
+        Farbe, Opacity, group) zur individuellen Formatierung der Balken im Chart.
     """
+    import pandas as pd
+    import holidays
 
-    # Konvertiere die Datumsangaben in pd.Timestamp
+    # Konvertiere Datumsangaben in pd.Timestamp
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
-    # Erstelle den täglichen Datumsindex für den gesamten Zeitraum
-    all_days = pd.date_range(start=start_date, end=end_date, freq='D')
+    # Erstelle einen täglichen Datumsindex für den gesamten Zeitraum
+    all_days = pd.date_range(start=start_date, end=end_date, freq="D")
 
     # 1. Tatsächliche Faktura berechnen (nur aus df_faktura)
-    mask_fact = (df_faktura["ProTime-Datum"] >= start_date) & (df_faktura["ProTime-Datum"] <= end_date)
+    mask_fact = (df_faktura["ProTime-Datum"] >= start_date) & (
+        df_faktura["ProTime-Datum"] <= end_date
+    )
     df_fact = df_faktura.loc[mask_fact].copy()
     # Umrechnung: 8 Stunden = 1 PT
     df_fact["Erfasste Menge"] = df_fact["Erfasste Menge"] / 8.0
     # Gruppiere nach Tag und fülle fehlende Tage mit 0
-    df_daily = df_fact.groupby(pd.Grouper(key="ProTime-Datum", freq="D"))["Erfasste Menge"].sum()
+    df_daily = df_fact.groupby(pd.Grouper(key="ProTime-Datum", freq="D"))[
+        "Erfasste Menge"
+    ].sum()
     df_daily = df_daily.reindex(all_days, fill_value=0)
     actual_cum = df_daily.cumsum()
 
-    # 2. Berechne Abwesenheitstage aus df_all getrennt für Urlaub und Krank
+    # 2. Abwesenheitstage aus df_all ermitteln (getrennt für Urlaub und Krank)
     absent_urlaub = set()
     absent_krank = set()
     if "Positionsbezeichnung" in df_all.columns:
-        # Urlaubstage
         vacation_rows = df_all.loc[
-            (df_all["Positionsbezeichnung"] == "Urlaub") &
-            (df_all["ProTime-Datum"] >= start_date) &
-            (df_all["ProTime-Datum"] <= end_date)
-            ]
+            (df_all["Positionsbezeichnung"] == "Urlaub")
+            & (df_all["ProTime-Datum"] >= start_date)
+            & (df_all["ProTime-Datum"] <= end_date)
+        ]
         absent_urlaub = set(vacation_rows["ProTime-Datum"].dt.normalize().dt.date)
-        # Kranktage
+
         krank_rows = df_all.loc[
-            (df_all["Positionsbezeichnung"] == "Krank") &
-            (df_all["ProTime-Datum"] >= start_date) &
-            (df_all["ProTime-Datum"] <= end_date)
-            ]
+            (df_all["Positionsbezeichnung"] == "Krank")
+            & (df_all["ProTime-Datum"] >= start_date)
+            & (df_all["ProTime-Datum"] <= end_date)
+        ]
         absent_krank = set(krank_rows["ProTime-Datum"].dt.normalize().dt.date)
 
     # 3. Feiertage in NRW ermitteln (als Datum-Objekte)
     years = list(range(start_date.year, end_date.year + 1))
-    nrw_holidays = holidays.Germany(prov='NW', years=years)
+    nrw_holidays = holidays.Germany(prov="NW", years=years)
     holiday_dates = set(nrw_holidays.keys())
 
-    # 4. Bestimme, welche Tage als verfügbare Arbeitstage gelten (wichtig für die Ideallinie)
+    # 4. Bestimme verfügbare Arbeitstage (wichtig für die Ideallinie)
     available = []
     for day in all_days:
         day_date = day.date()
         # Ein Tag gilt als verfügbar, wenn er ein Werktag (Mo–Fr) ist und
         # nicht als Feiertag, Urlaub oder Krank markiert ist.
-        if (day.weekday() < 5) and (day_date not in holiday_dates) and (day_date not in absent_urlaub) and (
-                day_date not in absent_krank):
+        if (
+            (day.weekday() < 5)
+            and (day_date not in holiday_dates)
+            and (day_date not in absent_urlaub)
+            and (day_date not in absent_krank)
+        ):
             available.append(True)
         else:
             available.append(False)
@@ -199,13 +193,17 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
     remaining_target = float(target)
     for i, day in enumerate(all_days):
         if available[i]:
-            remaining_available = sum(available[i:])  # noch verfügbare Arbeitstage (inkl. heute)
-            daily_increment = remaining_target / remaining_available if remaining_available > 0 else 0
+            remaining_available = sum(
+                available[i:]
+            )  # noch verfügbare Arbeitstage (inkl. heute)
+            daily_increment = (
+                remaining_target / remaining_available if remaining_available > 0 else 0
+            )
             cumulative += daily_increment
             remaining_target -= daily_increment
         ideal_values.append(cumulative)
 
-    # 6. Erstelle zusätzliche Spalten für den Bar-Plot (Farbe, Tagestyp, Opacity)
+    # 6. Erstelle zusätzliche Spalten für den Bar-Plot (Tagestyp, Farbe, Opacity)
     # Bestimme den letzten Tag, an dem tatsächliche Faktura erfasst wurde
     if not df_fact.empty:
         last_fact_date = df_fact["ProTime-Datum"].max().date()
@@ -215,8 +213,12 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
     day_types = []
     colors = []
     opacities = []
+    groups = (
+        []
+    )  # Für die Legende: "Wochenende", "Urlaub", "Krankheit", "Feiertag", "Arbeitstag"
     for day in all_days:
         day_date = day.date()
+        # Priorität: Feiertag > Urlaub > Krank > Wochenende > normal
         if day_date in holiday_dates:
             d_type = "Feiertag"
             col = "grey"
@@ -224,28 +226,44 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
             d_type = "Urlaub"
             col = "orange"
         elif day_date in absent_krank:
-            d_type = "Krank"
+            d_type = "Krankheit"
             col = "pink"
+        elif day.weekday() >= 5:  # Samstag (5) oder Sonntag (6)
+            d_type = "Wochenende"
+            col = "green"
         else:
             d_type = "normal"
             col = "#1f77b4"  # Standard blau
-        day_types.append(d_type)
-        colors.append(col)
-        # Wenn der Tag nach dem letzten erfassten Fakturationstag liegt, halbe Opacity
-        if (last_fact_date is not None) and (day_date > last_fact_date):
+
+        # Definiere die Gruppierung: Bei "normal" wird "Arbeitstag" angezeigt.
+        grp = "Arbeitstag" if d_type == "normal" else d_type
+
+        # Setze Opacity: Wochenenden (immer 0.5) und Tage nach dem letzten erfassten Datum (ebenfalls 0.5)
+        if d_type == "Wochenende":
             opac = 0.5
         else:
-            opac = 1.0
-        opacities.append(opac)
+            opac = (
+                0.5
+                if (last_fact_date is not None and day_date > last_fact_date)
+                else 1.0
+            )
 
-    # Erstelle ein DataFrame mit den Balken-Informationen
-    df_bar = pd.DataFrame({
-        "Datum": all_days,
-        "Tatsächliche Faktura": actual_cum.values,
-        "day_type": day_types,
-        "color": colors,
-        "opacity": opacities
-    })
+        day_types.append(d_type)
+        colors.append(col)
+        opacities.append(opac)
+        groups.append(grp)
+
+    # Erstelle ein DataFrame für die Balken-Informationen
+    df_bar = pd.DataFrame(
+        {
+            "Datum": all_days,
+            "Tatsächliche Faktura": actual_cum.values,
+            "day_type": day_types,
+            "color": colors,
+            "opacity": opacities,
+            "group": groups,
+        }
+    )
 
     return all_days, actual_cum, ideal_values, df_bar
 
