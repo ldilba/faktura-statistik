@@ -227,7 +227,7 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
             col = "orange"
         elif day_date in absent_krank:
             d_type = "Krankheit"
-            col = "pink"
+            col = "purple"
         elif day.weekday() >= 5:  # Samstag (5) oder Sonntag (6)
             d_type = "Wochenende"
             col = "green"
@@ -238,15 +238,17 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
         # Definiere die Gruppierung: Bei "normal" wird "Arbeitstag" angezeigt.
         grp = "Arbeitstag" if d_type == "normal" else d_type
 
-        # Setze Opacity: Wochenenden (immer 0.5) und Tage nach dem letzten erfassten Datum (ebenfalls 0.5)
-        if d_type == "Wochenende":
-            opac = 0.5
-        else:
-            opac = (
-                0.5
-                if (last_fact_date is not None and day_date > last_fact_date)
-                else 1.0
-            )
+        opac = 1
+        if (
+            d_type == "Wochenende"
+            or d_type == "Feiertag"
+            or d_type == "Urlaub"
+            or d_type == "Krankheit"
+        ):
+            opac = 0.6
+
+        if last_fact_date is not None and day_date > last_fact_date:
+            opac = 0.4
 
         day_types.append(d_type)
         colors.append(col)
