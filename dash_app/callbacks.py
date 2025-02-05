@@ -50,8 +50,9 @@ def register_callbacks(app):
         Output("faktura-daily-avg-hours-content", "config"),
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
+        Input("interval-dropdown", "value"),  # neuer Input für Intervall
     )
-    def update_faktura_daily_needed(start_date, end_date):
+    def update_faktura_needed(start_date, end_date, interval):
         # 1) Summe der bisher geleisteten Faktura ermitteln
         df_faktura = data_processing.df_faktura.copy()
         df_grouped = data_processing.filter_data_by_date(
@@ -59,12 +60,12 @@ def register_callbacks(app):
         )
         faktura_sum = df_grouped["Erfasste Menge"].sum()
 
-        # 2) Wie viele PT fehlen noch, um auf das Jahresziel (z.B. 160) zu kommen?
+        # 2) Fehlende PT bis zum Jahresziel (z.B. 160) berechnen
         remaining_pt = YEAR_TARGET_PT - faktura_sum
         if remaining_pt < 0:
-            remaining_pt = 0  # Falls schon über 160
+            remaining_pt = 0  # Falls bereits über dem Ziel
 
-        # 3) Berechne die noch verfügbaren Arbeitstage
+        # 3) Verfügbare Arbeitstage von heute bis end_date ermitteln
         df_all = data_processing.df_all.copy()
         today = datetime.date.today()
         end_date_date = pd.to_datetime(end_date).date()
@@ -77,40 +78,49 @@ def register_callbacks(app):
             )
 
         if remaining_days > 0:
+            # Tageswert: wie viele PT pro verfügbarem Arbeitstag noch benötigt werden
             daily_needed_pt = remaining_pt / remaining_days
         else:
             daily_needed_pt = 0
 
-        # Figure 1: PT pro Tag
+        # 4) Multiplikatoren und Label für die Intervallumrechnung festlegen
+        # Hier gehen wir von 1 Tag, 5 Arbeitstagen pro Woche und ca. 22 Arbeitstagen pro Monat aus.
+        conversion = {"D": (1, "Tag"), "W": (5, "Woche"), "ME": (22, "Monat")}
+        factor, label = conversion.get(interval, (1, "Tag"))
+        # Berechnung des benötigten Wertes für das gewählte Intervall:
+        interval_needed_pt = daily_needed_pt * factor
+        interval_needed_hours = daily_needed_pt * 8 * factor  # 8 Stunden pro Tag
+
+        # 5) Figure für PT (Punkte) erstellen
         fig_pt = go.Figure()
         fig_pt.add_trace(
             go.Indicator(
                 mode="number",
-                value=daily_needed_pt,
-                title={"text": "Ø PT pro Tag (Rest)", "font": {"size": 18}},
+                value=interval_needed_pt,
+                title={"text": f"Ø PT pro {label} (Rest)", "font": {"size": 18}},
                 number={"font": {"size": 35}},
             )
         )
         fig_pt.update_layout(
             height=100,
             paper_bgcolor="rgba(255,255,255,0)",
-            margin=dict(t=75, l=50, r=50, b=50)
+            margin=dict(t=75, l=50, r=50, b=50),
         )
 
-        # Figure 2: Stunden pro Tag
+        # 6) Figure für Stunden erstellen
         fig_hours = go.Figure()
         fig_hours.add_trace(
             go.Indicator(
                 mode="number",
-                value=daily_needed_pt * 8,
-                title={"text": "Ø Stunden pro Tag (Rest)", "font": {"size": 18}},
+                value=interval_needed_hours,
+                title={"text": f"Ø Stunden pro {label} (Rest)", "font": {"size": 18}},
                 number={"font": {"size": 35}},
             )
         )
         fig_hours.update_layout(
             height=100,
             paper_bgcolor="rgba(255,255,255,0)",
-            margin=dict(t=75, l=50, r=50, b=50)
+            margin=dict(t=75, l=50, r=50, b=50),
         )
 
         config = {"staticPlot": True}
