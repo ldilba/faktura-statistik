@@ -1,5 +1,5 @@
-from dash import Output, Input
-from dash_app.common import data
+from dash import Output, Input, no_update
+from dash_app.common import data, charts
 from dash_app.charts.faktura_gauge import processing
 
 
@@ -9,8 +9,16 @@ def register_callbacks(app):
         Output("faktura-total-content", "config"),
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
+        Input("update-trigger", "data"),
+        Input("data-loaded", "data"),
     )
-    def update_gauge_chart(start_date, end_date):
+    def update_gauge_chart(start_date, end_date, update, data_loaded):
+        if not data_loaded:
+            return charts.empty_figure(), {}
+
+        if not update:
+            return no_update
+
         df = data.df_faktura.copy()
         df_grouped = data.filter_data_by_date(df, start_date, end_date)
         figure, config = processing.create_gauge_chart(df_grouped)
@@ -24,8 +32,16 @@ def register_callbacks(app):
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
         Input("interval-dropdown", "value"),
+        Input("update-trigger", "data"),
+        Input("data-loaded", "data"),
     )
-    def update_daily_average(start_date, end_date, interval):
+    def update_daily_average(start_date, end_date, interval, update, data_loaded):
+        if not data_loaded:
+            return charts.empty_figure(), {}, charts.empty_figure(), {}
+
+        if not update:
+            return no_update
+
         df_faktura = data.df_faktura.copy()
         df_all = data.df_all.copy()
         fig_pt, config_pt, fig_hours, config_hours = (

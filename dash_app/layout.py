@@ -8,26 +8,41 @@ def create_layout():
 
     return html.Div(
         [
+            dcc.Store(id="data-loaded", data=False),
             # Datumsbereich
             html.Div(
                 [
                     html.Div(
                         [
-                            dcc.Upload(
-                                id="upload-data",
-                                children=html.Div(
-                                    [
-                                        "Drag and Drop or ",
-                                        html.A(
-                                            "Select File", className="text-blue-500"
+                            html.Div(
+                                [
+                                    dcc.Upload(
+                                        id="upload-data",
+                                        children=html.Div(
+                                            [
+                                                "Drag and Drop or ",
+                                                html.A(
+                                                    "Select File",
+                                                    className="text-blue-500",
+                                                ),
+                                            ]
                                         ),
-                                    ]
-                                ),
-                                className="w-[250px] text-center py-3 cursor-pointer",
-                                accept=".xlsx",
-                            )
+                                        className="w-[250px] text-center py-3 cursor-pointer",
+                                        accept=".xlsx",
+                                    )
+                                ],
+                                className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
+                            ),
+                            html.Div(id="output-data-upload", className="w-[250px]"),
+                            dcc.Interval(
+                                id="clear-message-interval",
+                                interval=3000,
+                                n_intervals=0,
+                                disabled=True,
+                            ),
+                            dcc.Store(id="update-trigger"),
                         ],
-                        className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
+                        className="flex gap-5 items-center",
                     ),
                     dcc.DatePickerRange(
                         id="date-picker-range",
@@ -35,16 +50,22 @@ def create_layout():
                         end_date=fiscal_end,
                         display_format="DD.MM.YYYY",
                     ),
-                    dcc.Dropdown(
-                        id="interval-dropdown",
-                        options=[
-                            {"label": "Tag", "value": "D"},
-                            {"label": "Woche", "value": "W"},
-                            {"label": "Monat", "value": "ME"},
+                    html.Div(
+                        [
+                            html.Div(className="w-[250px]"),
+                            dcc.Dropdown(
+                                id="interval-dropdown",
+                                options=[
+                                    {"label": "Tag", "value": "D"},
+                                    {"label": "Woche", "value": "W"},
+                                    {"label": "Monat", "value": "ME"},
+                                ],
+                                value="D",
+                                clearable=False,
+                                className="w-[250px]",
+                            ),
                         ],
-                        value="D",
-                        clearable=False,
-                        className="w-[250px]",
+                        className="flex",
                     ),
                 ],
                 className="flex justify-between items-center mt-4 mx-5",

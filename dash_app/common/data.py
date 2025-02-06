@@ -1,6 +1,11 @@
+import os
+
 import pandas as pd
 import datetime
 import holidays
+
+
+# from dash_app.app import app
 
 
 def split_allgemein(df):
@@ -281,14 +286,52 @@ def get_available_days(df_all, start_date, end_date):
     return available_count
 
 
-# === Daten werden einmalig geladen ===
-df_raw = load_data("data/export20250202202626.xlsx")
-df_faktura = get_faktura_projects(df_raw)
-df_all = get_all_projects(df_raw)
+df_raw = pd.DataFrame()
+df_faktura = pd.DataFrame()
+df_all = pd.DataFrame()
 
-# Optional: Beispielhafte Aggregationen
-fiscal_start, fiscal_end = get_fiscal_year_range()
-df_grouped = filter_data_by_date(df_faktura, fiscal_start, fiscal_end)
-df_aggregated = filter_and_aggregate_by_interval_stacked(
-    df_all, fiscal_start, fiscal_end, interval="D"
-)
+fiscal_start = datetime.date.today()
+fiscal_end = datetime.date.today()
+df_grouped = pd.DataFrame()
+
+df_aggregated = pd.DataFrame()
+
+
+def import_data(file):
+    global df_raw
+    global df_faktura
+    global df_all
+    global fiscal_start
+    global fiscal_end
+    global df_grouped
+    global df_aggregated
+    df_raw = load_data(file)
+    df_faktura = get_faktura_projects(df_raw)
+    df_all = get_all_projects(df_raw)
+
+    fiscal_start, fiscal_end = get_fiscal_year_range()
+    df_grouped = filter_data_by_date(df_faktura, fiscal_start, fiscal_end)
+    df_aggregated = filter_and_aggregate_by_interval_stacked(
+        df_all, fiscal_start, fiscal_end, interval="D"
+    )
+
+
+def find_excel_file(directory="data"):
+    # Stelle sicher, dass das Verzeichnis existiert
+    if not os.path.exists(directory):
+        return None
+
+    # Durchsucht das Verzeichnis nach .xlsx-Dateien
+    for file in os.listdir(directory):
+        if file.endswith(".xlsx"):
+            return os.path.join(directory, file)  # Gibt den vollständigen Pfad zurück
+
+    return None  # Falls keine Datei gefunden wurde
+
+
+def first_import(app):
+    excel_file = find_excel_file()
+    if excel_file:
+        import_data(file=f"{excel_file}")
+        app.server.config["data_loaded"] = True
+        app.server.config["update_trigger"] = {"update": True}
