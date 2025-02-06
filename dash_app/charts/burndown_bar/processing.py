@@ -71,10 +71,14 @@ def create_hours_burndown_chart(start_date, end_date, interval):
                 x=df_bar_res["Datum"],
                 y=df_bar_res["Tatsächliche Faktura"],
                 name="Kumulierte Faktura",
+                text=df_bar_res["Tatsächliche Faktura"],
                 marker_color="#1f77b4",
                 opacity=0.9,
+                textposition="inside",
+                texttemplate="%{y:.2f} PT",
             )
         )
+
     fig.add_trace(
         go.Scatter(
             x=df_lines_res["Datum"],
@@ -94,4 +98,5 @@ def create_hours_burndown_chart(start_date, end_date, interval):
         legend=dict(itemsizing="constant"),
     )
     fig.update_layout(paper_bgcolor="rgba(255,255,255,0)")
+
     return fig

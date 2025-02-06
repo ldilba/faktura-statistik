@@ -47,7 +47,7 @@ def create_layout():
                         className="w-[250px]",
                     ),
                 ],
-                className="flex justify-around items-center mt-4 ",
+                className="flex justify-between items-center mt-4 mx-5",
             ),
             html.Div(
                 [

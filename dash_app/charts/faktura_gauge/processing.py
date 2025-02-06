@@ -51,12 +51,13 @@ def create_daily_average_indicators(df_faktura, df_all, start_date, end_date, in
 
     # Ermittle den letzten gebuchten Arbeitstag anhand der Spalte "ProTime-Datum"
     if not df_filtered.empty:
-        letzter_buchungstag = pd.to_datetime(df_filtered["ProTime-Datum"]).max().date()
+        letzter_buchungstag = pd.to_datetime(df_faktura["ProTime-Datum"]).max().date()
     else:
         letzter_buchungstag = datetime.date.today()
 
     # Berechne die Anzahl verfügbarer Arbeitstage ab dem letzten gebuchten Arbeitstag bis zum Enddatum
     end_date_date = pd.to_datetime(end_date).date()
+
     if end_date_date < letzter_buchungstag:
         remaining_days = 0
     else:
