@@ -8,3 +8,14 @@
     display: flex !important;
     flex-direction: row !important;
 }
+
+.DateRangePickerInput__withBorder{
+    border-radius: 6px !important;
+}
+.DateInput{
+    background: none !important;
+}
+
+.DateInput_input{
+    border-radius: 6px !important;
+}

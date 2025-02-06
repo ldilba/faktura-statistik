@@ -1,9 +1,10 @@
 from dash import html, dcc
-import data_processing
+
+from dash_app.common import data
 
 
 def create_layout():
-    fiscal_start, fiscal_end = data_processing.get_fiscal_year_range()
+    fiscal_start, fiscal_end = data.get_fiscal_year_range()
 
     return html.Div(
         [
@@ -26,7 +27,7 @@ def create_layout():
                                 accept=".xlsx",
                             )
                         ],
-                        className="flex items-center border border-dashed border-slate-300 hover:border-slate-700 rounded-md",
+                        className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
                     ),
                     dcc.DatePickerRange(
                         id="date-picker-range",

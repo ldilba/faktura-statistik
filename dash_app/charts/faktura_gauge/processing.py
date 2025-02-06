@@ -32,24 +32,36 @@ def create_gauge_chart(df_grouped):
 def create_daily_average_indicators(df_faktura, df_all, start_date, end_date, interval):
     """
     Erzeugt zwei Indikatoren:
-      - Ø PT pro Intervall (z. B. pro Tag, Woche oder Monat) (Rest zur Zielvorgabe)
+      - Ø PT pro Intervall (z.B. pro Tag, Woche oder Monat) (Rest zur Zielvorgabe)
       - Ø Stunden pro Intervall (angenommen 8 Stunden pro PT)
     """
-    # Filtere die Faktura-Daten anhand des Datumsbereichs
+    # Gruppiere die Faktura-Daten innerhalb des Datumsbereichs
     df_grouped = data.filter_data_by_date(df_faktura, start_date, end_date)
+
+    # Filtere die ursprünglichen Faktura-Daten (ohne Gruppierung) zur Ermittlung des letzten Buchungstags
+    df_filtered = df_faktura[
+        (df_faktura["ProTime-Datum"] >= pd.to_datetime(start_date))
+        & (df_faktura["ProTime-Datum"] <= pd.to_datetime(end_date))
+    ]
+
     faktura_sum = df_grouped["Erfasste Menge"].sum()
     remaining_pt = YEAR_TARGET_PT - faktura_sum
     if remaining_pt < 0:
         remaining_pt = 0
 
-    # Bestimme die Anzahl verfügbarer Arbeitstage (ab heute bis Enddatum)
-    today = datetime.date.today()
+    # Ermittle den letzten gebuchten Arbeitstag anhand der Spalte "ProTime-Datum"
+    if not df_filtered.empty:
+        letzter_buchungstag = pd.to_datetime(df_filtered["ProTime-Datum"]).max().date()
+    else:
+        letzter_buchungstag = datetime.date.today()
+
+    # Berechne die Anzahl verfügbarer Arbeitstage ab dem letzten gebuchten Arbeitstag bis zum Enddatum
     end_date_date = pd.to_datetime(end_date).date()
-    if end_date_date < today:
+    if end_date_date < letzter_buchungstag:
         remaining_days = 0
     else:
         remaining_days = data.get_available_days(
-            df_all, start_date=today, end_date=end_date_date
+            df_all, start_date=letzter_buchungstag, end_date=end_date_date
         )
 
     if remaining_days > 0:
