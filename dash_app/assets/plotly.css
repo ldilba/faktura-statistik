@@ -36,16 +36,9 @@
 }
 
 .Select--single > .Select-control .Select-value {
-    top: revert !important;
+    top: 3px !important;
 }
 
-.js-plotly-plot {
-    border-radius: 0.75rem !important;
-}
-
-.plot-container plotly {
-    border-radius: 0.75rem !important;
-}
 
 .js-plotly-plot .plotly .main-svg {
     border-radius: 0.75rem !important;
