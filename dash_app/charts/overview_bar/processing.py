@@ -6,7 +6,7 @@ def create_interval_bar_chart(df_all, start_date, end_date, interval):
     df_agg = data.filter_and_aggregate_by_interval_stacked(
         df_all, start_date, end_date, interval
     )
-    print(df_agg)
+
     fig = px.bar(
         df_agg,
         x="ProTime-Datum",

@@ -1,5 +1,5 @@
 from dash import html, dcc
-
+from dash_iconify import DashIconify
 from common import data
 
 
@@ -8,11 +8,7 @@ def create_layout():
 
     return html.Div(
         [
-            dcc.Store(id="data-loaded", data=False),
             dcc.Store(id="data-all"),
-            dcc.Store(id="data-faktura"),
-            # dcc.Store(id="data-aggregated"),
-            # dcc.Store(id="data-grouped"),
             # Datumsbereich
             html.Div(
                 [
@@ -43,9 +39,17 @@ def create_layout():
                                 end_date=fiscal_end,
                                 display_format="DD.MM.YYYY",
                             ),
-                            html.Button("Update", id="update-date-range"),
+                            html.Button(
+                                DashIconify(
+                                    icon="heroicons:arrow-path",
+                                    height=24,
+                                    color="#2B7FFF",
+                                ),
+                                id="update-date-range",
+                                className="w-11 h-11 bg-white rounded-md flex items-center justify-center shadow-md",
+                            ),
                         ],
-                        className="flex gap-3",
+                        className="flex gap-3 items-center",
                     ),
                     html.Div(
                         [

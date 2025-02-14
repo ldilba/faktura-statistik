@@ -13,13 +13,13 @@ def register_callbacks(app):
         Output("faktura-total-content", "config"),
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
-        Input("data-faktura", "data"),
+        Input("data-all", "data"),
     )
-    def update_gauge_chart(start_date, end_date, data_faktura):
-        if not data_faktura:
+    def update_gauge_chart(start_date, end_date, data_all):
+        if not data_all or not data_all["faktura"]:
             return charts.empty_figure(), {}
 
-        df_faktura = pd.read_json(StringIO(data_faktura))
+        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
         df_grouped = data.filter_data_by_date(df_faktura, start_date, end_date)
         figure, config = processing.create_gauge_chart(df_grouped)
         return figure, config
@@ -32,15 +32,14 @@ def register_callbacks(app):
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
         Input("interval-dropdown", "value"),
-        Input("data-faktura", "data"),
         Input("data-all", "data"),
     )
-    def update_daily_average(start_date, end_date, interval, data_faktura, data_all):
-        if not data_faktura or not data_all:
+    def update_daily_average(start_date, end_date, interval, data_all):
+        if not data_all or not data_all["faktura"] or not data_all["all"]:
             return charts.empty_figure(), {}, charts.empty_figure(), {}
 
-        df_faktura = pd.read_json(StringIO(data_faktura))
-        df_all = pd.read_json(StringIO(data_all))
+        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
+        df_all = pd.read_json(StringIO(data_all["all"]))
 
         fig_pt, config_pt, fig_hours, config_hours = (
             processing.create_daily_average_indicators(

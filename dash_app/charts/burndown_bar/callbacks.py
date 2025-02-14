@@ -13,15 +13,14 @@ def register_callbacks(app):
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
         Input("interval-dropdown", "value"),
-        Input("data-faktura", "data"),
         Input("data-all", "data"),
     )
-    def update_hours_burndown(start_date, end_date, interval, data_faktura, data_all):
-        if not data_faktura:
+    def update_hours_burndown(start_date, end_date, interval, data_all):
+        if not data_all or not data_all["faktura"] or not data_all["all"]:
             return charts.empty_figure()
 
-        df_faktura = pd.read_json(StringIO(data_faktura))
-        df_all = pd.read_json(StringIO(data_all))
+        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
+        df_all = pd.read_json(StringIO(data_all["all"]))
 
         figure = processing.create_hours_burndown_chart(
             df_faktura, df_all, start_date, end_date, interval

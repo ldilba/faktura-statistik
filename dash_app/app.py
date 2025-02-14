@@ -11,7 +11,10 @@ from charts.overview_bar import callbacks as overview_callbacks
 from interactions import callbacks as interaction_callbacks
 
 # Optionale externe Skripte (hier z. B. TailwindCSS)
-external_scripts = [{"src": "https://cdn.tailwindcss.com"}]
+external_scripts = [
+    {"src": "https://cdn.tailwindcss.com"},
+    {"src": "https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"},
+]
 
 # Dash-App initialisieren
 app = Dash(external_scripts=external_scripts)
@@ -25,6 +28,7 @@ projects_callbacks.register_callbacks(app)
 burndown_callbacks.register_callbacks(app)
 overview_callbacks.register_callbacks(app)
 interaction_callbacks.register_callbacks(app)
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)

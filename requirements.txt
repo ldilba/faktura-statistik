@@ -4,3 +4,4 @@ black
 plotly~=6.0.0
 pandas~=2.2.3
 holidays
+dash-iconify

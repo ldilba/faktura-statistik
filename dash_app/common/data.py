@@ -274,18 +274,8 @@ def get_available_days(df_all, start_date, end_date):
     return available_count
 
 
-fiscal_start = datetime.date.today()
-fiscal_end = datetime.date.today()
-
-
 def import_data(df):
-    global fiscal_start
-    global fiscal_end
-
-    df_raw = df
-    df_faktura = get_faktura_projects(df_raw)
-    df_all = get_all_projects(df_raw)
-
-    fiscal_start, fiscal_end = get_fiscal_year_range()
+    df_faktura = get_faktura_projects(df)
+    df_all = get_all_projects(df)
 
     return df_all, df_faktura

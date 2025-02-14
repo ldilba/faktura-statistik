@@ -10,16 +10,12 @@ from common import data
 def register_callbacks(app):
     @app.callback(
         Output("data-all", "data"),
-        Output("data-faktura", "data"),
         Input("upload-data", "contents"),
     )
     def update_output(contents):
 
         if contents is None:
-            return (
-                None,
-                None,
-            )
+            return None
 
         content_type, content_string = contents.split(",")
         decoded = base64.b64decode(content_string)
@@ -27,8 +23,8 @@ def register_callbacks(app):
         try:
             df = pd.read_excel(io.BytesIO(decoded))
             df_all, df_faktura = data.import_data(df)
-            return df_all.to_json(), df_faktura.to_json()
+            return {"all": df_all.to_json(), "faktura": df_faktura.to_json()}
 
         except Exception as e:
             print(e)
-            return None, None
+            return None

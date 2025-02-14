@@ -15,10 +15,10 @@ def register_callbacks(app):
         Input("data-all", "data"),
     )
     def update_interval_bar_chart(start_date, end_date, interval, data_all):
-        if not data_all:
+        if not data_all or not data_all["all"]:
             return charts.empty_figure()
 
-        df_all = pd.read_json(StringIO(data_all))
+        df_all = pd.read_json(StringIO(data_all["all"]))
         figure = processing.create_interval_bar_chart(
             df_all, start_date, end_date, interval
         )
