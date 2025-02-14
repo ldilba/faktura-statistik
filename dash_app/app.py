@@ -1,8 +1,7 @@
-# app.py
 from dash import Dash
 import layout
+import plotly.io as pio
 
-# Importiere die Callback-Registrierungsfunktionen der einzelnen Chart-Module:
 from charts.faktura_gauge import callbacks as faktura_callbacks
 from charts.projects_bar import callbacks as projects_callbacks
 from charts.burndown_bar import callbacks as burndown_callbacks
@@ -10,19 +9,17 @@ from charts.overview_bar import callbacks as overview_callbacks
 
 from interactions import callbacks as interaction_callbacks
 
-# Optionale externe Skripte (hier z. B. TailwindCSS)
 external_scripts = [
     {"src": "https://cdn.tailwindcss.com"},
     {"src": "https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"},
 ]
 
-# Dash-App initialisieren
+pio.templates.default = "plotly_white"
+
 app = Dash(external_scripts=external_scripts)
 
-# Layout setzen (das Layout kannst du natürlich auch modular aufteilen)
 app.layout = layout.create_layout()
 
-# Registriere die Callbacks aller Charts:
 faktura_callbacks.register_callbacks(app)
 projects_callbacks.register_callbacks(app)
 burndown_callbacks.register_callbacks(app)

@@ -7,6 +7,9 @@ def create_interval_bar_chart(df_all, start_date, end_date, interval):
         df_all, start_date, end_date, interval
     )
 
+    print("OVERVIEW")
+    print(df_agg)
+
     fig = px.bar(
         df_agg,
         x="ProTime-Datum",
@@ -19,7 +22,7 @@ def create_interval_bar_chart(df_all, start_date, end_date, interval):
             "Kurztext": "Projekt",
         },
         height=400,
-        template="plotly_white",
+        template=None,
     )
     fig.update_layout(barmode="stack", paper_bgcolor="rgba(255,255,255,0)")
     fig.update_traces(texttemplate="%{y:.2f}", textposition="auto")

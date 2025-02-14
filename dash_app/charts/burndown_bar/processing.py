@@ -91,7 +91,7 @@ def create_hours_burndown_chart(df_fact, df_all, start_date, end_date, interval)
         title=f"Kumulative Faktura & Ideallinie ({interval})",
         xaxis_title="",
         yaxis_title="Kumulative Faktura (PT)",
-        template="plotly_white",
+        template=None,
         height=500,
         barmode="overlay",
         legend=dict(itemsizing="constant"),
