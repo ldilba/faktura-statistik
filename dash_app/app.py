@@ -30,4 +30,4 @@ interaction_callbacks.register_callbacks(app)
 data.first_import(app)
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
