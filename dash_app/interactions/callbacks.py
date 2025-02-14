@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from dash import Output, Input, State, html, callback_context, no_update
 
-from dash_app.common import data
+from common import data
 
 
 def register_callbacks(app):

@@ -1,6 +1,6 @@
 from dash import Output, Input, no_update
-from dash_app.charts.burndown_bar import processing
-from dash_app.common import charts
+from charts.burndown_bar import processing
+from common import charts
 
 
 def register_callbacks(app):

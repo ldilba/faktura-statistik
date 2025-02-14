@@ -7,7 +7,7 @@ from charts.faktura_gauge import callbacks as faktura_callbacks
 from charts.projects_bar import callbacks as projects_callbacks
 from charts.burndown_bar import callbacks as burndown_callbacks
 from charts.overview_bar import callbacks as overview_callbacks
-from dash_app.common import data
+from common import data
 
 from interactions import callbacks as interaction_callbacks
 

@@ -1,6 +1,6 @@
 from dash import html, dcc
 
-from dash_app.common import data
+from common import data
 
 
 def create_layout():

@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 import datetime
 import pandas as pd
-from dash_app.common import data
+from common import data
 
 YEAR_TARGET_PT = 160.0
 

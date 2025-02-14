@@ -1,5 +1,5 @@
 import plotly.express as px
-from dash_app.common import data
+from common import data
 
 
 def create_interval_bar_chart(start_date, end_date, interval):
