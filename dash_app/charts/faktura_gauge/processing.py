@@ -3,10 +3,8 @@ import datetime
 import pandas as pd
 from common import data
 
-YEAR_TARGET_PT = 160.0
 
-
-def create_gauge_chart(df_grouped):
+def create_gauge_chart(df_grouped, faktura_target):
     """
     Erzeugt einen Gauge-Chart, der die kumulative Faktura (in PT) anzeigt.
     """
@@ -15,9 +13,9 @@ def create_gauge_chart(df_grouped):
         go.Indicator(
             mode="gauge+number+delta",
             value=total_value,
-            delta={"reference": YEAR_TARGET_PT},
+            delta={"reference": faktura_target},
             title={"text": "Faktura Total"},
-            gauge={"axis": {"range": [0, YEAR_TARGET_PT]}},
+            gauge={"axis": {"range": [0, faktura_target]}},
             domain={"x": [0, 1], "y": [0, 1]},
         )
     )
@@ -29,7 +27,9 @@ def create_gauge_chart(df_grouped):
     return gauge_fig, config
 
 
-def create_daily_average_indicators(df_faktura, df_all, start_date, end_date, interval):
+def create_daily_average_indicators(
+    df_faktura, df_all, start_date, end_date, interval, faktura_target
+):
     """
     Erzeugt zwei Indikatoren:
       - Ø PT pro Intervall (z.B. pro Tag, Woche oder Monat) (Rest zur Zielvorgabe)
@@ -47,7 +47,7 @@ def create_daily_average_indicators(df_faktura, df_all, start_date, end_date, in
     ]
 
     faktura_sum = df_grouped["Erfasste Menge"].sum()
-    remaining_pt = YEAR_TARGET_PT - faktura_sum
+    remaining_pt = faktura_target - faktura_sum
     if remaining_pt < 0:
         remaining_pt = 0
 

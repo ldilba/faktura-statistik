@@ -2,10 +2,10 @@ import plotly.graph_objects as go
 import pandas as pd
 from common import data
 
-YEAR_TARGET_PT = 160.0
 
-
-def create_hours_burndown_chart(df_fact, df_all, start_date, end_date, interval):
+def create_hours_burndown_chart(
+    df_fact, df_all, start_date, end_date, interval, faktura_target
+):
     df_fact["ProTime-Datum"] = pd.to_datetime(df_fact["ProTime-Datum"], unit="ms")
     df_all["ProTime-Datum"] = pd.to_datetime(df_all["ProTime-Datum"], unit="ms")
 
@@ -19,7 +19,7 @@ def create_hours_burndown_chart(df_fact, df_all, start_date, end_date, interval)
     subrange_available = data.get_available_days(df_all, start_date, end_date)
 
     # 3) Dynamische Ziel-Berechnung (PT)
-    daily_rate = YEAR_TARGET_PT / total_available_fy
+    daily_rate = faktura_target / total_available_fy
     dynamic_target = daily_rate * subrange_available
 
     # 4) Burndown-Daten berechnen (täglich)

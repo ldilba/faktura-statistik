@@ -9,13 +9,44 @@
     flex-direction: row !important;
 }
 
-.DateRangePickerInput__withBorder{
+.DateRangePickerInput__withBorder {
     border-radius: 6px !important;
 }
-.DateInput{
+
+.DateInput {
     background: none !important;
 }
 
-.DateInput_input{
+.DateInput_input {
     border-radius: 6px !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.Select-control {
+    border-color: #D1D5DC !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    border-radius: 0.375rem !important;
+}
+
+.Select-value {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+}
+
+.Select--single > .Select-control .Select-value {
+    top: revert !important;
+}
+
+.js-plotly-plot {
+    border-radius: 0.75rem !important;
+}
+
+.plot-container plotly {
+    border-radius: 0.75rem !important;
+}
+
+.js-plotly-plot .plotly .main-svg {
+    border-radius: 0.75rem !important;
 }

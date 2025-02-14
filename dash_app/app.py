@@ -11,7 +11,6 @@ from interactions import callbacks as interaction_callbacks
 
 external_scripts = [
     {"src": "https://cdn.tailwindcss.com"},
-    {"src": "https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"},
 ]
 
 pio.templates.default = "plotly_white"

@@ -1,6 +1,20 @@
+import json
+
 from dash import html, dcc
 from dash_iconify import DashIconify
 from common import data
+
+
+def load_config():
+    try:
+        with open("../config.json", "r") as file:
+            config = json.load(file)
+            return config.get("faktura_target", 160)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 160
+
+
+faktura_target = load_config()
 
 
 def create_layout():
@@ -14,30 +28,56 @@ def create_layout():
                 [
                     html.Div(
                         [
-                            dcc.Upload(
-                                id="upload-data",
-                                children=html.Div(
-                                    [
-                                        "Drag and Drop or ",
-                                        html.A(
-                                            "Select File",
-                                            className="text-blue-500",
+                            html.Div(
+                                [
+                                    dcc.Upload(
+                                        id="upload-data",
+                                        children=html.Div(
+                                            [
+                                                "Drag and Drop or ",
+                                                html.A(
+                                                    "Select File",
+                                                    className="text-blue-500",
+                                                ),
+                                            ]
                                         ),
-                                    ]
-                                ),
-                                className="w-[250px] text-center py-3 cursor-pointer",
-                                accept=".xlsx",
-                            )
+                                        className="w-[250px] text-center py-2 cursor-pointer",
+                                        accept=".xlsx",
+                                    )
+                                ],
+                                className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
+                            ),
+                            html.Div(
+                                [
+                                    dcc.DatePickerRange(
+                                        id="date-picker-range",
+                                        start_date=fiscal_start,
+                                        end_date=fiscal_end,
+                                        display_format="DD.MM.YYYY",
+                                    ),
+                                    html.Button(
+                                        DashIconify(
+                                            icon="heroicons:arrow-path",
+                                            height=24,
+                                            color="#2B7FFF",
+                                        ),
+                                        id="update-date-range",
+                                        className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
+                                    ),
+                                ],
+                                className="flex gap-3 items-center",
+                            ),
                         ],
-                        className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
+                        className="flex gap-6",
                     ),
                     html.Div(
                         [
-                            dcc.DatePickerRange(
-                                id="date-picker-range",
-                                start_date=fiscal_start,
-                                end_date=fiscal_end,
-                                display_format="DD.MM.YYYY",
+                            html.Div("Faktura PT:", className="text-gray-700"),
+                            dcc.Input(
+                                value=faktura_target,
+                                id="faktura-tage",
+                                className="p-2 rounded-md border border-gray-300",
+                                type="number",
                             ),
                             html.Button(
                                 DashIconify(
@@ -45,14 +85,9 @@ def create_layout():
                                     height=24,
                                     color="#2B7FFF",
                                 ),
-                                id="update-date-range",
-                                className="w-11 h-11 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
+                                id="update-faktura-tage",
+                                className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
                             ),
-                        ],
-                        className="flex gap-3 items-center",
-                    ),
-                    html.Div(
-                        [
                             dcc.Dropdown(
                                 id="interval-dropdown",
                                 options=[
@@ -62,10 +97,10 @@ def create_layout():
                                 ],
                                 value="D",
                                 clearable=False,
-                                className="w-[250px]",
+                                className="w-[250px] ml-4",
                             ),
                         ],
-                        className="flex",
+                        className="flex gap-3 items-center",
                     ),
                 ],
                 className="flex justify-between items-center mt-4 mx-5",
