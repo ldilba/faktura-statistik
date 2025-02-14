@@ -297,7 +297,7 @@ df_grouped = pd.DataFrame()
 df_aggregated = pd.DataFrame()
 
 
-def import_data(file):
+def import_data(df):
     global df_raw
     global df_faktura
     global df_all
@@ -305,7 +305,7 @@ def import_data(file):
     global fiscal_end
     global df_grouped
     global df_aggregated
-    df_raw = load_data(file)
+    df_raw = df
     df_faktura = get_faktura_projects(df_raw)
     df_all = get_all_projects(df_raw)
 
@@ -314,24 +314,3 @@ def import_data(file):
     df_aggregated = filter_and_aggregate_by_interval_stacked(
         df_all, fiscal_start, fiscal_end, interval="D"
     )
-
-
-def find_excel_file(directory="data"):
-    # Stelle sicher, dass das Verzeichnis existiert
-    if not os.path.exists(directory):
-        return None
-
-    # Durchsucht das Verzeichnis nach .xlsx-Dateien
-    for file in os.listdir(directory):
-        if file.endswith(".xlsx"):
-            return os.path.join(directory, file)  # Gibt den vollständigen Pfad zurück
-
-    return None  # Falls keine Datei gefunden wurde
-
-
-def first_import(app):
-    excel_file = find_excel_file()
-    if excel_file:
-        import_data(file=f"{excel_file}")
-        app.server.config["data_loaded"] = True
-        app.server.config["update_trigger"] = {"update": True}

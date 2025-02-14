@@ -1,9 +1,8 @@
 import base64
 import io
-import os
 
 import pandas as pd
-from dash import Output, Input, State, html, callback_context, no_update
+from dash import Output, Input, State, html, callback_context
 
 from common import data
 
@@ -12,7 +11,6 @@ def register_callbacks(app):
     @app.callback(
         Output("output-data-upload", "children"),
         Output("clear-message-interval", "disabled"),
-        Output("update-trigger", "data"),
         Output("data-loaded", "data"),
         Input("upload-data", "contents"),
         Input("clear-message-interval", "n_intervals"),
@@ -26,10 +24,10 @@ def register_callbacks(app):
 
         # Falls Timer ausgelöst wurde, lösche die Nachricht
         if trigger_id == "clear-message-interval":
-            return "", True, no_update, True
+            return "", True, True
 
         if contents is None:
-            return "", True, no_update, False
+            return "", True, False
 
         content_type, content_string = contents.split(",")
         decoded = base64.b64decode(content_string)
@@ -38,18 +36,17 @@ def register_callbacks(app):
             # Datei als DataFrame laden
             df = pd.read_excel(io.BytesIO(decoded))
 
-            save_path = f"data/{filename}"
-            os.makedirs("data", exist_ok=True)
-            with open(save_path, "wb") as f:
-                f.write(decoded)
+            # save_path = f"data/{filename}"
+            # os.makedirs("data", exist_ok=True)
+            # with open(save_path, "wb") as f:
+            #     f.write(decoded)
 
-            data.import_data(save_path)
-            os.remove(save_path)
+            data.import_data(df)
+            # os.remove(save_path)
 
             return (
                 html.Div("Datei hochgeladen.", className="text-green-500"),
                 False,
-                {"update": True},
                 True,
             )
 
@@ -58,6 +55,5 @@ def register_callbacks(app):
             return (
                 html.Div("Fehler beim hochladen.", className="text-red-500"),
                 True,
-                no_update,
                 False,
             )

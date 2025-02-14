@@ -40,7 +40,6 @@ def create_layout():
                                 n_intervals=0,
                                 disabled=True,
                             ),
-                            dcc.Store(id="update-trigger"),
                         ],
                         className="flex gap-5 items-center",
                     ),
