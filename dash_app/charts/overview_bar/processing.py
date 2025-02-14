@@ -7,9 +7,6 @@ def create_interval_bar_chart(df_all, start_date, end_date, interval):
         df_all, start_date, end_date, interval
     )
 
-    print("OVERVIEW")
-    print(df_agg)
-
     fig = px.bar(
         df_agg,
         x="ProTime-Datum",

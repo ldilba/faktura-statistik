@@ -46,14 +46,13 @@ def create_layout():
                                     color="#2B7FFF",
                                 ),
                                 id="update-date-range",
-                                className="w-11 h-11 bg-white rounded-md flex items-center justify-center shadow-md",
+                                className="w-11 h-11 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
                             ),
                         ],
                         className="flex gap-3 items-center",
                     ),
                     html.Div(
                         [
-                            html.Div(className="w-[250px]"),
                             dcc.Dropdown(
                                 id="interval-dropdown",
                                 options=[

@@ -2,10 +2,6 @@ import plotly.express as px
 
 
 def create_project_bar_chart(df_grouped):
-
-    print("PROJECTS")
-    print(df_grouped)
-
     bar_fig = px.bar(
         df_grouped,
         x="Kurztext",
