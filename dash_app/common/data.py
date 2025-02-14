@@ -181,8 +181,8 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
         ideal_values.append(cumulative)
 
     # Zusätzliche Daten für den Bar-Plot (z. B. zur individuellen Formatierung)
-    if not df_fact.empty:
-        last_fact_date = df_fact["ProTime-Datum"].max().date()
+    if not df_all.empty:
+        last_fact_date = df_all["ProTime-Datum"].max().date()
     else:
         last_fact_date = None
 
