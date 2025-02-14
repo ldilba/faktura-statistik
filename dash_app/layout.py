@@ -72,7 +72,7 @@ def create_layout():
                     ),
                     html.Div(
                         [
-                            html.Div("Faktura PT:", className="text-gray-700"),
+                            html.Div("Zielvereinbarung PT:", className="text-gray-700"),
                             dcc.Input(
                                 value=faktura_target,
                                 id="faktura-tage",
