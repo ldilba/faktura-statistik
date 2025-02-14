@@ -2,11 +2,11 @@ import plotly.express as px
 from common import data
 
 
-def create_interval_bar_chart(start_date, end_date, interval):
-    df = data.df_all.copy()
+def create_interval_bar_chart(df_all, start_date, end_date, interval):
     df_agg = data.filter_and_aggregate_by_interval_stacked(
-        df, start_date, end_date, interval
+        df_all, start_date, end_date, interval
     )
+    print(df_agg)
     fig = px.bar(
         df_agg,
         x="ProTime-Datum",

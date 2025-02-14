@@ -27,4 +27,4 @@ overview_callbacks.register_callbacks(app)
 interaction_callbacks.register_callbacks(app)
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)

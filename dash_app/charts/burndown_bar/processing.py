@@ -5,30 +5,29 @@ from common import data
 YEAR_TARGET_PT = 160.0
 
 
-def create_hours_burndown_chart(start_date, end_date, interval):
-    # 1) Hole Faktura- und All-Daten
-    df_fact = data.df_faktura.copy()
-    df_all = data.df_all.copy()
+def create_hours_burndown_chart(df_fact, df_all, start_date, end_date, interval):
+    df_fact["ProTime-Datum"] = pd.to_datetime(df_fact["ProTime-Datum"], unit="ms")
+    df_all["ProTime-Datum"] = pd.to_datetime(df_all["ProTime-Datum"], unit="ms")
 
-    # 2) Bestimme den Geschäftsjahresbereich und verfügbare Arbeitstage im GJ
+    # 1) Bestimme den Geschäftsjahresbereich und verfügbare Arbeitstage im GJ
     fy_start, fy_end = data.get_fiscal_year_range()
     total_available_fy = data.get_available_days(df_all, fy_start, fy_end)
     if total_available_fy == 0:
         total_available_fy = 1
 
-    # 3) Verfügbare Arbeitstage im gewählten Zeitraum
+    # 2) Verfügbare Arbeitstage im gewählten Zeitraum
     subrange_available = data.get_available_days(df_all, start_date, end_date)
 
-    # 4) Dynamische Ziel-Berechnung (PT)
+    # 3) Dynamische Ziel-Berechnung (PT)
     daily_rate = YEAR_TARGET_PT / total_available_fy
     dynamic_target = daily_rate * subrange_available
 
-    # 5) Burndown-Daten berechnen (täglich)
+    # 4) Burndown-Daten berechnen (täglich)
     all_days, actual_cum, ideal_values, df_bar = data.get_burndown_data(
         df_fact, df_all, start_date, end_date, target=dynamic_target
     )
 
-    # 6) Resampling vorbereiten
+    # 5) Resampling vorbereiten
     df_lines = pd.DataFrame(
         {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values}
     ).set_index("Datum")
@@ -47,7 +46,7 @@ def create_hours_burndown_chart(start_date, end_date, interval):
     df_lines_res = df_lines_res.reset_index()
     df_bar_res = df_bar_res.reset_index()
 
-    # 7) Figure erstellen
+    # 6) Figure erstellen
     fig = go.Figure()
 
     if interval == "D":

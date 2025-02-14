@@ -35,6 +35,8 @@ def create_daily_average_indicators(df_faktura, df_all, start_date, end_date, in
       - Ø PT pro Intervall (z.B. pro Tag, Woche oder Monat) (Rest zur Zielvorgabe)
       - Ø Stunden pro Intervall (angenommen 8 Stunden pro PT)
     """
+    df_faktura["ProTime-Datum"] = pd.to_datetime(df_faktura["ProTime-Datum"], unit="ms")
+    df_all["ProTime-Datum"] = pd.to_datetime(df_all["ProTime-Datum"], unit="ms")
     # Gruppiere die Faktura-Daten innerhalb des Datumsbereichs
     df_grouped = data.filter_data_by_date(df_faktura, start_date, end_date)
 

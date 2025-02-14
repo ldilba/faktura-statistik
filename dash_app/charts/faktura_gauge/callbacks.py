@@ -1,6 +1,10 @@
+from io import StringIO
+
 from dash import Output, Input
 from common import data, charts
 from charts.faktura_gauge import processing
+
+import pandas as pd
 
 
 def register_callbacks(app):
@@ -9,14 +13,14 @@ def register_callbacks(app):
         Output("faktura-total-content", "config"),
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
-        Input("data-loaded", "data"),
+        Input("data-faktura", "data"),
     )
-    def update_gauge_chart(start_date, end_date, data_loaded):
-        if not data_loaded:
+    def update_gauge_chart(start_date, end_date, data_faktura):
+        if not data_faktura:
             return charts.empty_figure(), {}
 
-        df = data.df_faktura.copy()
-        df_grouped = data.filter_data_by_date(df, start_date, end_date)
+        df_faktura = pd.read_json(StringIO(data_faktura))
+        df_grouped = data.filter_data_by_date(df_faktura, start_date, end_date)
         figure, config = processing.create_gauge_chart(df_grouped)
         return figure, config
 
@@ -28,14 +32,16 @@ def register_callbacks(app):
         Input("date-picker-range", "start_date"),
         Input("date-picker-range", "end_date"),
         Input("interval-dropdown", "value"),
-        Input("data-loaded", "data"),
+        Input("data-faktura", "data"),
+        Input("data-all", "data"),
     )
-    def update_daily_average(start_date, end_date, interval, data_loaded):
-        if not data_loaded:
+    def update_daily_average(start_date, end_date, interval, data_faktura, data_all):
+        if not data_faktura or not data_all:
             return charts.empty_figure(), {}, charts.empty_figure(), {}
 
-        df_faktura = data.df_faktura.copy()
-        df_all = data.df_all.copy()
+        df_faktura = pd.read_json(StringIO(data_faktura))
+        df_all = pd.read_json(StringIO(data_all))
+
         fig_pt, config_pt, fig_hours, config_hours = (
             processing.create_daily_average_indicators(
                 df_faktura, df_all, start_date, end_date, interval

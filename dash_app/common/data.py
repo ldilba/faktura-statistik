@@ -1,11 +1,6 @@
-import os
-
 import pandas as pd
 import datetime
 import holidays
-
-
-# from dash_app.app import app
 
 
 def split_allgemein(df):
@@ -23,15 +18,6 @@ def split_allgemein(df):
             )
         )
         df = df.explode("Kurztext")
-    return df
-
-
-def load_data(file_path):
-    """
-    Lädt die Excel-Datei und konvertiert die Datumsspalte.
-    """
-    df = pd.read_excel(file_path)
-    df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], errors="coerce")
     return df
 
 
@@ -84,6 +70,7 @@ def filter_data_by_date(df, start_date, end_date):
     nach ["Auftrag/Projekt/Kst.", "Kurztext"]. Dabei wird die 'Erfasste Menge'
     in PT (8 Stunden = 1 PT) umgerechnet.
     """
+    df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], unit="ms")
     df_filtered = df[
         (df["ProTime-Datum"] >= pd.to_datetime(start_date))
         & (df["ProTime-Datum"] <= pd.to_datetime(end_date))
@@ -101,6 +88,7 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
     je nach gewähltem Intervall (z. B. täglich, wöchentlich oder monatlich) und
     gruppiert zusätzlich nach Projekt (Kurztext).
     """
+    df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"], unit="ms")
     df_filtered = df[
         (df["ProTime-Datum"] >= pd.to_datetime(start_date))
         & (df["ProTime-Datum"] <= pd.to_datetime(end_date))
@@ -286,31 +274,18 @@ def get_available_days(df_all, start_date, end_date):
     return available_count
 
 
-df_raw = pd.DataFrame()
-df_faktura = pd.DataFrame()
-df_all = pd.DataFrame()
-
 fiscal_start = datetime.date.today()
 fiscal_end = datetime.date.today()
-df_grouped = pd.DataFrame()
-
-df_aggregated = pd.DataFrame()
 
 
 def import_data(df):
-    global df_raw
-    global df_faktura
-    global df_all
     global fiscal_start
     global fiscal_end
-    global df_grouped
-    global df_aggregated
+
     df_raw = df
     df_faktura = get_faktura_projects(df_raw)
     df_all = get_all_projects(df_raw)
 
     fiscal_start, fiscal_end = get_fiscal_year_range()
-    df_grouped = filter_data_by_date(df_faktura, fiscal_start, fiscal_end)
-    df_aggregated = filter_and_aggregate_by_interval_stacked(
-        df_all, fiscal_start, fiscal_end, interval="D"
-    )
+
+    return df_all, df_faktura
