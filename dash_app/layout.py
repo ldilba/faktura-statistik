@@ -124,6 +124,10 @@ def create_layout():
                         ],
                         className="flex flex-col gap-4 w-1/6",
                     ),
+                    dcc.Graph(
+                        id="ueberstunden-content",
+                        className="rounded-xl bg-white shadow-lg w-1/6",
+                    ),
                 ],
                 className="flex mx-5 gap-5",
             ),
