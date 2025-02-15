@@ -10,6 +10,7 @@ import pandas as pd
 def register_callbacks(app):
     @app.callback(
         Output("hours-burndown-content", "figure"),
+        Output("hours-burndown-content", "config"),
         Input("update-date-range", "n_clicks"),
         Input("update-faktura-tage", "n_clicks"),
         Input("interval-dropdown", "value"),
@@ -22,12 +23,12 @@ def register_callbacks(app):
         _, __, interval, data_all, start_date, end_date, faktura_tage
     ):
         if not data_all or not data_all["faktura"] or not data_all["all"]:
-            return charts.empty_figure()
+            return charts.empty_figure(), {}
 
         df_faktura = pd.read_json(StringIO(data_all["faktura"]))
         df_all = pd.read_json(StringIO(data_all["all"]))
 
-        figure = processing.create_hours_burndown_chart(
+        figure, config = processing.create_hours_burndown_chart(
             df_faktura, df_all, start_date, end_date, interval, int(faktura_tage)
         )
-        return figure
+        return figure, config

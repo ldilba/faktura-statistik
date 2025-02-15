@@ -227,4 +227,6 @@ def create_hours_burndown_chart(
     )
     fig.update_layout(paper_bgcolor="rgba(255,255,255,0)")
 
-    return fig
+    config = {"displaylogo": False}
+
+    return fig, config

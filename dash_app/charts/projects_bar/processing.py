@@ -12,5 +12,5 @@ def create_project_bar_chart(df_grouped):
     )
     bar_fig.update_layout(height=400, paper_bgcolor="rgba(255,255,255,0)")
     bar_fig.update_traces(texttemplate="%{y:.2f} PT", textposition="auto")
-    config = {"staticPlot": True}
+    config = {"displaylogo": False}
     return bar_fig, config
