@@ -1,3 +1,4 @@
+import datetime
 import plotly.graph_objects as go
 import pandas as pd
 import holidays
@@ -19,7 +20,7 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
 
     # Tatsächliche Faktura berechnen (8 Stunden = 1 PT)
     mask_fact = (df_faktura["ProTime-Datum"] >= start_date) & (
-        df_faktura["ProTime-Datum"] <= end_date
+            df_faktura["ProTime-Datum"] <= end_date
     )
     df_fact = df_faktura.loc[mask_fact].copy()
     df_fact["Erfasste Menge"] = df_fact["Erfasste Menge"] / 8.0
@@ -37,13 +38,13 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
             (df_all["Positionsbezeichnung"] == "Urlaub")
             & (df_all["ProTime-Datum"] >= start_date)
             & (df_all["ProTime-Datum"] <= end_date)
-        ]
+            ]
         absent_urlaub = set(vacation_rows["ProTime-Datum"].dt.normalize().dt.date)
         krank_rows = df_all.loc[
             (df_all["Positionsbezeichnung"] == "Krank")
             & (df_all["ProTime-Datum"] >= start_date)
             & (df_all["ProTime-Datum"] <= end_date)
-        ]
+            ]
         absent_krank = set(krank_rows["ProTime-Datum"].dt.normalize().dt.date)
 
     # Feiertage in NRW bestimmen
@@ -56,10 +57,10 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
     for day in all_days:
         day_date = day.date()
         if (
-            (day.weekday() < 5)
-            and (day_date not in holiday_dates)
-            and (day_date not in absent_urlaub)
-            and (day_date not in absent_krank)
+                (day.weekday() < 5)
+                and (day_date not in holiday_dates)
+                and (day_date not in absent_urlaub)
+                and (day_date not in absent_krank)
         ):
             available.append(True)
         else:
@@ -132,40 +133,67 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
     return all_days, actual_cum, ideal_values, df_bar
 
 
+def get_fiscal_year_range_for(any_date):
+    """
+    Liefert das Geschäftsjahr (01.04.–31.03.), das `any_date`
+    enthält. akzeptiert str, Timestamp oder date.
+    """
+    d = pd.to_datetime(any_date).date()
+    if d.month < 4:
+        return (datetime.date(d.year - 1, 4, 1),
+                datetime.date(d.year, 3, 31))
+    else:
+        return (datetime.date(d.year, 4, 1),
+                datetime.date(d.year + 1, 3, 31))
+
+
 def create_hours_burndown_chart(
-    df_fact, df_all, start_date, end_date, interval, faktura_target
+        df_fact, df_all, start_date, end_date, interval, faktura_target
 ):
+    # ---------------------------------------------------------
+    #  0) Vorbereitungen
+    # ---------------------------------------------------------
     df_fact["ProTime-Datum"] = pd.to_datetime(df_fact["ProTime-Datum"], unit="ms")
     df_all["ProTime-Datum"] = pd.to_datetime(df_all["ProTime-Datum"], unit="ms")
 
-    # 1) Bestimme den Geschäftsjahresbereich und verfügbare Arbeitstage im GJ
-    fy_start, fy_end = data.get_fiscal_year_range()
+    # ---------------------------------------------------------
+    #  1) Arbeitstage im Geschäftsjahr, das zum Auswahl-Intervall gehört
+    # ---------------------------------------------------------
+    fy_start, fy_end = get_fiscal_year_range_for(start_date)  # ❶
     total_available_fy = data.get_available_days(df_all, fy_start, fy_end)
     if total_available_fy == 0:
-        total_available_fy = 1
+        total_available_fy = 1  # division-by-zero-safe
 
-    # 2) Verfügbare Arbeitstage im gewählten Zeitraum
+    # ---------------------------------------------------------
+    #  2) Arbeitstage im ausgewählten Teil-Intervall
+    # ---------------------------------------------------------
     subrange_available = data.get_available_days(df_all, start_date, end_date)
 
-    # 3) Dynamische Ziel-Berechnung (PT)
+    # ---------------------------------------------------------
+    #  3) Dynamische Ziel-PT
+    # ---------------------------------------------------------
     daily_rate = faktura_target / total_available_fy
     dynamic_target = daily_rate * subrange_available
 
-    # 4) Burndown-Daten berechnen (täglich)
+    # ---------------------------------------------------------
+    #  4) Burndown-Daten (täglich)
+    # ---------------------------------------------------------
     all_days, actual_cum, ideal_values, df_bar = get_burndown_data(
         df_fact, df_all, start_date, end_date, target=dynamic_target
     )
 
-    # 5) Resampling vorbereiten
-    df_lines = pd.DataFrame(
-        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values}
-    ).set_index("Datum")
+    # ---------------------------------------------------------
+    #  5) Resampling (D/W/Monat)
+    # ---------------------------------------------------------
+    df_lines = (pd.DataFrame(
+        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values})
+                .set_index("Datum"))
     df_bar = df_bar.set_index("Datum")
 
     freq_map = {"D": None, "W": "W", "ME": "ME"}
-    freq = freq_map.get(interval, None)
+    freq = freq_map.get(interval)
 
-    if freq is not None:
+    if freq:
         df_lines_res = df_lines.resample(freq).last().dropna(how="all")
         df_bar_res = df_bar.resample(freq).last().dropna(how="all")
     else:
@@ -175,7 +203,9 @@ def create_hours_burndown_chart(
     df_lines_res = df_lines_res.reset_index()
     df_bar_res = df_bar_res.reset_index()
 
-    # 6) Figure erstellen
+    # ---------------------------------------------------------
+    #  6) Plot
+    # ---------------------------------------------------------
     fig = go.Figure()
 
     if interval == "D":
@@ -190,7 +220,7 @@ def create_hours_burndown_chart(
                         name=grp,
                         marker_color=dfg["color"].iloc[0],
                         marker_opacity=dfg["opacity"].tolist(),
-                        width=86400000 * 0.9,  # ca. 1 Tag in ms
+                        width=86400000 * 0.9,
                     )
                 )
     else:
@@ -216,17 +246,16 @@ def create_hours_burndown_chart(
             line=dict(color="red"),
         )
     )
+
     fig.update_layout(
         title=f"Kumulative Faktura & Ideallinie ({interval})",
         xaxis_title="",
         yaxis_title="Kumulative Faktura (PT)",
-        template=None,
         height=500,
         barmode="overlay",
         legend=dict(itemsizing="constant"),
+        template=None,
+        paper_bgcolor="rgba(255,255,255,0)",
     )
-    fig.update_layout(paper_bgcolor="rgba(255,255,255,0)")
 
-    config = {"displaylogo": False}
-
-    return fig, config
+    return fig, {"displaylogo": False}
