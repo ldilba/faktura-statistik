@@ -29,6 +29,19 @@ verhaeltnis_callbacks.register_callbacks(app)
 interaction_callbacks.register_callbacks(app)
 ueberstunden_callbacks.register_callbacks(app)
 
+server = app.server
+
+
+@server.route("/healthz")
+def healthz():
+    return "OK", 200
+
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(
+        host="0.0.0.0",
+        port=8050,
+        debug=False,
+        dev_tools_ui=False,
+        dev_tools_props_check=False
+    )

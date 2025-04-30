@@ -19,5 +19,11 @@ COPY . .
 # 6. Expose Port (Dash-Default)
 EXPOSE 8050
 
-# 7. Startkommando
-CMD ["python", "app.py"]
+# 7. Start mit Gunicorn
+CMD ["gunicorn", "app:server", \
+     "--workers", "4", \
+     "--threads", "2", \
+     "--bind", "0.0.0.0:8050", \
+     "--timeout", "120", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]
