@@ -1,0 +1,16 @@
+# IDE- und Umgebungsordner
+.idea/
+venv/
+
+# Helm-Charts
+faktura-statistik/
+
+# Python-Caches
+__pycache__/
+*.py[cod]
+
+# Environment-Files
+.env
+
+# GitHub Deployment
+.github/
