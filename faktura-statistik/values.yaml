@@ -1,0 +1,51 @@
+imageCredentials:
+  secretName: registry-optimus
+  registry: registry.optimus.conet.de
+  username: ""
+  password: ""
+
+app-template:
+  defaultPodOptions:
+    imagePullSecrets:
+      - name: registry-optimus
+
+    backend:
+      containers:
+        backend:
+          image:
+            repository: ghcr.io/ldilba/faktura-statistik
+            tag: latest
+            pullPolicy: Always
+          probes:
+            liveness:
+              enabled: true
+              type: HTTP
+              path: /healthz
+            readiness:
+              enabled: true
+              type: HTTP
+              path: /healthz
+
+  service:
+    backend:
+      controller: backend
+      ports:
+        http:
+          port: 80
+
+  ingressHost: localhost
+  ingress:
+    main:
+      className: "traefik"
+      hosts:
+        - host: "{{ .Values.ingressHost }}"
+          paths:
+            - path: /
+              service:
+                identifier: backend
+                port: http
+
+      tls: []
+      # - secretName: app-tls
+      #   hosts:
+      #   - "{{ .Values.ingressHost }}"

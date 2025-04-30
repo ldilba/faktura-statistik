@@ -17,13 +17,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 6. Expose Port (Dash-Default)
-EXPOSE 8050
+EXPOSE 80
 
 # 7. Start mit Gunicorn
 CMD ["gunicorn", "app:server", \
      "--workers", "4", \
      "--threads", "2", \
-     "--bind", "0.0.0.0:8050", \
+     "--bind", "0.0.0.0:80", \
      "--timeout", "120", \
      "--access-logfile", "-", \
      "--error-logfile", "-"]
