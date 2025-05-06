@@ -5,10 +5,7 @@ imageCredentials:
   password: ""
 
 app-template:
-  defaultPodOptions:
-    imagePullSecrets:
-      - name: registry-optimus
-
+  controllers:
     backend:
       containers:
         backend:
