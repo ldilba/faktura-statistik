@@ -1,7 +1,10 @@
 name: Publish Helm Chart
 
 on:
+  workflow_dispatch:
   push:
+    branches:
+      - master
     paths:
       - 'faktura-statistik/**'
 
