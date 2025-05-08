@@ -7,6 +7,7 @@ on:
       - master
     paths:
       - 'faktura-statistik/**'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -15,27 +16,31 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
 
       - name: Enable OCI support
-        run: export HELM_EXPERIMENTAL_OCI=1
+        run: echo "HELM_EXPERIMENTAL_OCI=1" >> $GITHUB_ENV
 
       - name: Package Helm Chart
         working-directory: ./faktura-statistik
         run: helm package . --version ${GITHUB_RUN_NUMBER}
 
       - name: Login to GHCR
-        run: helm registry login ghcr.io \
-          --username ${{ github.actor }} \
-          --password ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          helm registry login ghcr.io \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push OCI Chart
-        env:
-          HELM_EXPERIMENTAL_OCI: 1
         run: |
           VERSION=${GITHUB_RUN_NUMBER}
           helm chart save faktura-statistik-${VERSION}.tgz \
