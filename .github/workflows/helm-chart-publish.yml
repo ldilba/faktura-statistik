@@ -3,8 +3,7 @@ name: Publish Helm Chart
 on:
   workflow_dispatch:
   push:
-    branches:
-      - master
+    branches: [ master ]
     paths:
       - 'faktura-statistik/**'
       - '.github/workflows/**'
@@ -19,14 +18,27 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HELM_EXPERIMENTAL_OCI: 1
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
           version: 'v3.12.0'
+
+      - name: Verify Helm version
+        run: helm version --client --short
+
+      # Falls hier < v3.8 kommt, führe die manuelle Installation aus:
+      - name: Install Helm v3.12.0 manually
+        if: startsWith(steps.verify_helm_version.outputs.stdout, 'v3.7')
+        run: |
+          curl -fsSL https://get.helm.sh/helm-v3.12.0-linux-amd64.tar.gz | tar -xz
+          sudo mv linux-amd64/helm /usr/local/bin/helm
+      - name: Verify new Helm version
+        if: steps.install_helm_v3_12_0_manually.conclusion == 'success'
+        run: helm version --client --short
 
       - name: Package Helm Chart
         working-directory: ./faktura-statistik
