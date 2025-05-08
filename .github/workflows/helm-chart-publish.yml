@@ -16,19 +16,17 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      HELM_EXPERIMENTAL_OCI: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
-
-      - name: Enable OCI support
-        run: echo "HELM_EXPERIMENTAL_OCI=1" >> $GITHUB_ENV
+        with:
+          version: 'v3.12.0'
 
       - name: Package Helm Chart
         working-directory: ./faktura-statistik
