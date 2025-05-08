@@ -1,5 +1,6 @@
 # .github/workflows/publish-helm-chart.yml
 name: Publish Helm Chart
+
 on:
   workflow_dispatch:
   push:
@@ -17,14 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Ab Helm ≥3.8 optional – kann bleiben, schadet nicht
-      HELM_EXPERIMENTAL_OCI: 1
+      HELM_EXPERIMENTAL_OCI: 1   # ab Helm ≥3.8 optional – kann bleiben
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Helm (aktuellste 3.x)
+      - name: Install Helm (v3.12.0)
         run: |
           HELM_VERSION="v3.12.0"
           curl -fsSL https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz \
@@ -33,19 +33,19 @@ jobs:
           sudo mv linux-amd64/helm /usr/local/bin/helm
           helm version --short
 
-      - name: Package Helm Chart
-        working-directory: ./faktura-statistik
-        run: |
-          helm package . --version "${GITHUB_RUN_NUMBER}"
-
       - name: Login to GHCR
         run: |
           helm registry login ghcr.io \
             --username "${{ github.actor }}" \
             --password "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Push OCI Chart
+      - name: Package & Push Helm Chart
         run: |
           VERSION="${GITHUB_RUN_NUMBER}"
+
+          # Chart aus dem Unterordner packen; Artefakt landet im Root
+          helm package ./faktura-statistik --version "${VERSION}"
+
+          # OCI-Push (Chart-Name/Version werden aus dem .tgz gelesen)
           helm push "faktura-statistik-${VERSION}.tgz" \
             oci://ghcr.io/ldilba/faktura-statistik
