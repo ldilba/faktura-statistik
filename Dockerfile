@@ -20,7 +20,7 @@ COPY . .
 EXPOSE 80
 
 # 7. Start mit Gunicorn
-CMD ["gunicorn", "app:server", \
+CMD ["gunicorn", "dash_app.app:server", \
      "--workers", "4", \
      "--threads", "2", \
      "--bind", "0.0.0.0:80", \
