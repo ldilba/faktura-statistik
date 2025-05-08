@@ -1,29 +1,23 @@
-# 1. Basis-Image: Python 3.12 slim
+# 1. Basis-Image
 FROM python:3.12-slim
 
-# 2. Arbeitsverzeichnis
-WORKDIR /dash_app
+# 2. Arbeitsverzeichnis ausserhalb des Pakets
+WORKDIR /app
 
-# 3. System-Abhängigkeiten (falls du build-tools o. ä. brauchst)
-RUN apt-get update && \
-    apt-get install -y build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-# 4. Copy requirements und install
+# 3. Requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy des gesamten Projekts
-COPY . .
+# 4. Nur das eigentliche Paket kopieren
+COPY dash_app ./dash_app
+# (optional) sicherstellen, dass dash_app als Paket gilt
+# RUN touch dash_app/__init__.py
 
-# 6. Expose Port (Dash-Default)
+# 5. Expose Port 80
 EXPOSE 80
 
-# 7. Start mit Gunicorn
+# 6. Start-Befehl
 CMD ["gunicorn", "dash_app.app:server", \
-     "--workers", "4", \
-     "--threads", "2", \
-     "--bind", "0.0.0.0:80", \
-     "--timeout", "120", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+     "--workers", "4", "--threads", "2", \
+     "--bind", "0.0.0.0:80", "--timeout", "120", \
+     "--access-logfile", "-", "--error-logfile", "-"]
