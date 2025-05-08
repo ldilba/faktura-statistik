@@ -1,5 +1,5 @@
+# .github/workflows/publish-helm-chart.yml
 name: Publish Helm Chart
-
 on:
   workflow_dispatch:
   push:
@@ -17,33 +17,35 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Ab Helm ≥3.8 optional – kann bleiben, schadet nicht
       HELM_EXPERIMENTAL_OCI: 1
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Helm v3.12.0
+      - name: Install Helm (aktuellste 3.x)
         run: |
-          curl -fsSL https://get.helm.sh/helm-v3.12.0-linux-amd64.tar.gz \
-            -o helm-v3.12.0-linux-amd64.tar.gz
-          tar -xzvf helm-v3.12.0-linux-amd64.tar.gz
+          HELM_VERSION="v3.12.0"
+          curl -fsSL https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz \
+            -o helm-${HELM_VERSION}-linux-amd64.tar.gz
+          tar -xzf helm-${HELM_VERSION}-linux-amd64.tar.gz
           sudo mv linux-amd64/helm /usr/local/bin/helm
-          helm version --client --short
+          helm version --short
 
       - name: Package Helm Chart
         working-directory: ./faktura-statistik
-        run: helm package . --version ${GITHUB_RUN_NUMBER}
+        run: |
+          helm package . --version "${GITHUB_RUN_NUMBER}"
 
       - name: Login to GHCR
         run: |
           helm registry login ghcr.io \
-            --username ${{ github.actor }} \
-            --password ${{ secrets.GITHUB_TOKEN }}
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Push OCI Chart
         run: |
-          VERSION=${GITHUB_RUN_NUMBER}
-          helm chart save faktura-statistik-${VERSION}.tgz \
+          VERSION="${GITHUB_RUN_NUMBER}"
+          helm push "faktura-statistik-${VERSION}.tgz" \
             oci://ghcr.io/ldilba/faktura-statistik
-          helm chart push oci://ghcr.io/ldilba/faktura-statistik:${VERSION}
