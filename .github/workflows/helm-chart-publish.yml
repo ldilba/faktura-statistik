@@ -6,7 +6,7 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'faktura-statistik/**'
+      - 'faktura-statistik-charts/**'
       - '.github/workflows/**'
 
 permissions:
@@ -39,6 +39,6 @@ jobs:
         env:
           VERSION: ${{ github.run_number }}
         run: |
-          helm package ./faktura-statistik --version "$VERSION"
+          helm package ./faktura-statistik-charts --version "$VERSION"
           helm push "faktura-statistik-$VERSION.tgz" \
-            oci://ghcr.io/ldilba/faktura-statistik
+            oci://ghcr.io/ldilba/faktura-statistik/charts

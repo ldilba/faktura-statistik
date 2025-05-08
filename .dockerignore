@@ -3,7 +3,7 @@
 venv/
 
 # Helm-Charts
-faktura-statistik/
+faktura-statistik-charts/
 
 # Python-Caches
 __pycache__/
