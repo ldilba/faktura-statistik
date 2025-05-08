@@ -1,5 +1,5 @@
 apiVersion: v2
-name: faktura-statistik
+name: faktura-statistik-charts
 description: App-Chart fuer Plotly Dash
 type: application
 version: 0.1.0
