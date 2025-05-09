@@ -6,3 +6,4 @@ pandas~=2.2.3
 holidays
 dash-iconify
 gunicorn
+gevent

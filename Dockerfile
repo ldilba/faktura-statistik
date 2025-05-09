@@ -19,7 +19,8 @@ COPY dash_app/ .
 EXPOSE 80
 
 # 6. Start-Command
-CMD ["gunicorn", "app:server",              \
-     "--workers", "4", "--threads", "2",    \
+CMD ["gunicorn", "app:server", \
+     "--workers", "4", \
+     "--worker-class", "gevent", \
      "--bind", "0.0.0.0:80", "--timeout", "120", \
      "--access-logfile", "-", "--error-logfile", "-"]

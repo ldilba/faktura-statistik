@@ -1,6 +1,38 @@
 import pandas as pd
 import datetime
 import holidays
+import re
+
+_LEISTUNG_STUNDE_RX = re.compile(r"\bStunde\b", flags=re.I)
+_LEISTUNG_NON_FAKT_RX = re.compile(r"nicht\s*fakturierte\s*stunde", flags=re.I)
+
+
+def preprocess_leistung(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    * verschiebt „Nichtfakturierte Stunde“-Buchungen, die aber auf ein
+      Faktura-Projekt (K…, X…) gehen, in ein eigenes Projekt
+      (Suffix „ - non Faktura“).
+    * liefert eine Kopie des DataFrames zurück, verändert also nichts in-place.
+    """
+    df = df.copy()
+
+    # ----------------------------------------------------------
+    #  1) Non-Faktura-Stunden auf Faktura-Projekten umetikettieren
+    # ----------------------------------------------------------
+    mask_non_fakt_on_fakt_proj = (
+            df["Auftrag/Projekt/Kst."].notna()
+            & df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
+            & df["Leistung"].str.contains(_LEISTUNG_NON_FAKT_RX, na=False)
+    )
+    df.loc[mask_non_fakt_on_fakt_proj, "Auftrag/Projekt/Kst."] = (
+            df.loc[mask_non_fakt_on_fakt_proj, "Auftrag/Projekt/Kst."] + " - non Faktura"
+    )
+
+    df.loc[mask_non_fakt_on_fakt_proj, "Kurztext"] = (
+            df.loc[mask_non_fakt_on_fakt_proj, "Kurztext"] + " - non Faktura"
+    )
+
+    return df
 
 
 def split_allgemein(df):
@@ -28,15 +60,18 @@ def get_faktura_projects(df):
     Zudem wird bei "Stunden - CONET Solutions GmbH" der Kurztext anhand der Spalte
     'Positionsbezeichnung' aufgeteilt.
     """
-    df_faktura = df[
-        df["Auftrag/Projekt/Kst."].notna()
-        & df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
-    ]
+    mask_code = df["Auftrag/Projekt/Kst."].notna() & df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
+
+    mask_stunde = (
+            df["Leistung"].str.contains(_LEISTUNG_STUNDE_RX, na=False)
+            & ~df["Leistung"].str.contains(_LEISTUNG_NON_FAKT_RX, na=False)
+    )
+
+    df_faktura = df[mask_code & mask_stunde].copy()
     df_faktura = split_allgemein(df_faktura)
-    df_faktura = df_faktura[
+    return df_faktura[
         ["ProTime-Datum", "Erfasste Menge", "Auftrag/Projekt/Kst.", "Kurztext"]
     ]
-    return df_faktura
 
 
 def get_all_projects(df):
@@ -74,7 +109,7 @@ def filter_data_by_date(df, start_date, end_date):
     df_filtered = df[
         (df["ProTime-Datum"] >= pd.to_datetime(start_date))
         & (df["ProTime-Datum"] <= pd.to_datetime(end_date))
-    ]
+        ]
     df_grouped = df_filtered.groupby(
         ["Auftrag/Projekt/Kst.", "Kurztext"], as_index=False
     )["Erfasste Menge"].sum()
@@ -98,13 +133,13 @@ def get_available_days(df_all, start_date, end_date):
             (df_all["Positionsbezeichnung"] == "Urlaub")
             & (df_all["ProTime-Datum"] >= start_date)
             & (df_all["ProTime-Datum"] <= end_date)
-        ]
+            ]
         absent_urlaub = set(vacation_rows["ProTime-Datum"].dt.normalize())
         krank_rows = df_all.loc[
             (df_all["Positionsbezeichnung"] == "Krank")
             & (df_all["ProTime-Datum"] >= start_date)
             & (df_all["ProTime-Datum"] <= end_date)
-        ]
+            ]
         absent_krank = set(krank_rows["ProTime-Datum"].dt.normalize())
 
     years = range(start_date.year, end_date.year + 1)
@@ -114,16 +149,17 @@ def get_available_days(df_all, start_date, end_date):
     available_count = 0
     for day in all_days:
         if (
-            (day.weekday() < 5)
-            and (day not in holiday_dates)
-            and (day not in absent_urlaub)
-            and (day not in absent_krank)
+                (day.weekday() < 5)
+                and (day not in holiday_dates)
+                and (day not in absent_urlaub)
+                and (day not in absent_krank)
         ):
             available_count += 1
     return available_count
 
 
 def import_data(df):
+    df = preprocess_leistung(df)
     df_faktura = get_faktura_projects(df)
     df_all = get_all_projects(df)
 
