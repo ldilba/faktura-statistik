@@ -22,8 +22,12 @@ def register_callbacks(app):
 
         try:
             df = pd.read_excel(io.BytesIO(decoded))
-            df_all, df_faktura = data.import_data(df)
-            return {"all": df_all.to_json(), "faktura": df_faktura.to_json()}
+            df_all, df_faktura, df_wertschoepfend = data.import_data(df)
+            return {
+                "all": df_all.to_json(), 
+                "faktura": df_faktura.to_json(),
+                "wertschoepfend": df_wertschoepfend.to_json()
+            }
 
         except Exception as e:
             print(e)

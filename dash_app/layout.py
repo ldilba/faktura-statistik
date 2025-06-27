@@ -111,6 +111,10 @@ def create_layout():
                         id="faktura-total-content",
                         className="rounded-xl bg-white shadow-lg w-1/6 h-[14rem]",
                     ),
+                    dcc.Graph(
+                        id="wertschoepfend-total-content",
+                        className="rounded-xl bg-white shadow-lg w-1/6 h-[14rem]",
+                    ),
                     html.Div(
                         [
                             dcc.Graph(

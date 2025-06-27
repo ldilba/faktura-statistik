@@ -158,9 +158,37 @@ def get_available_days(df_all, start_date, end_date):
     return available_count
 
 
+def get_wertschoepfende_projects(df):
+    """
+    Filtert das DataFrame auf wertschöpfende Projekte:
+    - Alle Faktura-Projekte (wie in get_faktura_projects)
+    - Nicht-fakturierte Stunden innerhalb von Faktura-Projekten mit Code "K"
+    """
+    # Faktura Projekte (wie in get_faktura_projects)
+    mask_code = df["Auftrag/Projekt/Kst."].notna() & df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
+    mask_stunde = (
+            df["Leistung"].str.contains(_LEISTUNG_STUNDE_RX, na=False)
+            & ~df["Leistung"].str.contains(_LEISTUNG_NON_FAKT_RX, na=False)
+    )
+
+    # Nicht-fakturierte Stunden in K-Projekten
+    mask_non_fakt_k_proj = (
+            df["Auftrag/Projekt/Kst."].notna()
+            & df["Auftrag/Projekt/Kst."].str.startswith("K")
+            & df["Leistung"].str.contains(_LEISTUNG_NON_FAKT_RX, na=False)
+    )
+
+    # Kombiniere beide Masken
+    df_wertschoepfend = df[(mask_code & mask_stunde) | mask_non_fakt_k_proj].copy()
+    df_wertschoepfend = split_allgemein(df_wertschoepfend)
+    return df_wertschoepfend[
+        ["ProTime-Datum", "Erfasste Menge", "Auftrag/Projekt/Kst.", "Kurztext"]
+    ]
+
 def import_data(df):
     df = preprocess_leistung(df)
     df_faktura = get_faktura_projects(df)
+    df_wertschoepfend = get_wertschoepfende_projects(df)
     df_all = get_all_projects(df)
 
-    return df_all, df_faktura
+    return df_all, df_faktura, df_wertschoepfend
