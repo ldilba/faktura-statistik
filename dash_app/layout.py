@@ -1,6 +1,6 @@
 import json
 
-from dash import html, dcc
+from dash import html, dcc, clientside_callback, ClientsideFunction, Output, Input
 from dash_iconify import DashIconify
 from common import data
 
@@ -24,6 +24,18 @@ config_values = load_config()
 faktura_target = config_values["faktura_target"]
 wertschoepfend_target = config_values["wertschoepfend_target"]
 
+# Clientside callback for toast notifications
+clientside_callback(
+    ClientsideFunction(
+        namespace="clientside",
+        function_name="update_toast"
+    ),
+    Output("toast-container", "className"),
+    Output("toast-message", "children"),
+    Input("toast-data", "data"),
+    Input("toast-close", "n_clicks"),
+)
+
 
 def create_layout():
     fiscal_start, fiscal_end = data.get_fiscal_year_range()
@@ -31,6 +43,27 @@ def create_layout():
     return html.Div(
         [
             dcc.Store(id="data-all"),
+            dcc.Store(id="toast-data", data={"message": "", "is_open": False}),
+
+            # Toast notification
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Span(id="toast-message"),
+                            html.Button(
+                                "×",
+                                id="toast-close",
+                                className="ml-2 text-white",
+                                n_clicks=0,
+                            ),
+                        ],
+                        className="flex justify-between items-center px-4 py-3 bg-red-500 text-white rounded-lg shadow-lg",
+                    )
+                ],
+                id="toast-container",
+                className="fixed top-4 right-4 z-50 transition-opacity duration-300 opacity-0 pointer-events-none",
+            ),
             # Datumsbereich
             html.Div(
                 [
@@ -54,6 +87,10 @@ def create_layout():
                                     )
                                 ],
                                 className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
+                            ),
+                            html.Div(
+                                id="upload-error-message",
+                                className="text-red-500 text-sm mt-1 ml-2",
                             ),
                             html.Div(
                                 [

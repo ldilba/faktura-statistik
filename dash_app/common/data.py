@@ -186,9 +186,22 @@ def get_wertschoepfende_projects(df):
     ]
 
 def import_data(df):
-    df = preprocess_leistung(df)
-    df_faktura = get_faktura_projects(df)
-    df_wertschoepfend = get_wertschoepfende_projects(df)
-    df_all = get_all_projects(df)
+    try:
+        # Ensure required columns have the expected data types
+        if "ProTime-Datum" in df.columns and not pd.api.types.is_datetime64_any_dtype(df["ProTime-Datum"]):
+            try:
+                df["ProTime-Datum"] = pd.to_datetime(df["ProTime-Datum"])
+            except:
+                # If conversion fails, keep as is and let the processing functions handle it
+                pass
 
-    return df_all, df_faktura, df_wertschoepfend
+        # Process the data
+        df = preprocess_leistung(df)
+        df_faktura = get_faktura_projects(df)
+        df_wertschoepfend = get_wertschoepfende_projects(df)
+        df_all = get_all_projects(df)
+
+        return df_all, df_faktura, df_wertschoepfend
+    except Exception as e:
+        # Re-raise the exception with a more informative message
+        raise Exception(f"Fehler bei der Datenverarbeitung: {str(e)}")
