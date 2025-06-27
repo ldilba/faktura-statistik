@@ -5,10 +5,10 @@ import holidays
 from common import data
 
 
-def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
+def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=160):
     """
     Berechnet:
-      - Die kumulative tatsächliche Faktura (in PT) basierend auf df_faktura.
+      - Die kumulative tatsächliche wertschöpfende Stunden (in PT) basierend auf df_wertschoepfend.
       - Eine dynamisch berechnete Ideallinie (in PT), unter Berücksichtigung von
         Feiertagen, Urlaub, Krankheit und Wochenenden.
       - Ein DataFrame (df_bar) mit zusätzlichen Informationen (Datum, Tagestyp,
@@ -18,11 +18,11 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
     end_date = pd.to_datetime(end_date)
     all_days = pd.date_range(start=start_date, end=end_date, freq="D")
 
-    # Tatsächliche Faktura berechnen (8 Stunden = 1 PT)
-    mask_fact = (df_faktura["ProTime-Datum"] >= start_date) & (
-            df_faktura["ProTime-Datum"] <= end_date
+    # Tatsächliche wertschöpfende Stunden berechnen (8 Stunden = 1 PT)
+    mask_fact = (df_wertschoepfend["ProTime-Datum"] >= start_date) & (
+            df_wertschoepfend["ProTime-Datum"] <= end_date
     )
-    df_fact = df_faktura.loc[mask_fact].copy()
+    df_fact = df_wertschoepfend.loc[mask_fact].copy()
     df_fact["Erfasste Menge"] = df_fact["Erfasste Menge"] / 8.0
     df_daily = df_fact.groupby(pd.Grouper(key="ProTime-Datum", freq="D"))[
         "Erfasste Menge"
@@ -122,7 +122,7 @@ def get_burndown_data(df_faktura, df_all, start_date, end_date, target=160):
     df_bar = pd.DataFrame(
         {
             "Datum": all_days,
-            "Tatsächliche Faktura": actual_cum.values,
+            "Tatsächliche Wertschöpfung": actual_cum.values,
             "day_type": day_types,
             "color": colors,
             "opacity": opacities,
@@ -148,12 +148,12 @@ def get_fiscal_year_range_for(any_date):
 
 
 def create_hours_burndown_chart(
-        df_fact, df_all, start_date, end_date, interval, faktura_target
+        df_wertschoepfend, df_all, start_date, end_date, interval, wertschoepfend_target
 ):
     # ---------------------------------------------------------
     #  0) Vorbereitungen
     # ---------------------------------------------------------
-    df_fact["ProTime-Datum"] = pd.to_datetime(df_fact["ProTime-Datum"], unit="ms")
+    df_wertschoepfend["ProTime-Datum"] = pd.to_datetime(df_wertschoepfend["ProTime-Datum"], unit="ms")
     df_all["ProTime-Datum"] = pd.to_datetime(df_all["ProTime-Datum"], unit="ms")
 
     # ---------------------------------------------------------
@@ -172,14 +172,14 @@ def create_hours_burndown_chart(
     # ---------------------------------------------------------
     #  3) Dynamische Ziel-PT
     # ---------------------------------------------------------
-    daily_rate = faktura_target / total_available_fy
+    daily_rate = wertschoepfend_target / total_available_fy
     dynamic_target = daily_rate * subrange_available
 
     # ---------------------------------------------------------
     #  4) Burndown-Daten (täglich)
     # ---------------------------------------------------------
     all_days, actual_cum, ideal_values, df_bar = get_burndown_data(
-        df_fact, df_all, start_date, end_date, target=dynamic_target
+        df_wertschoepfend, df_all, start_date, end_date, target=dynamic_target
     )
 
     # ---------------------------------------------------------
@@ -216,7 +216,7 @@ def create_hours_burndown_chart(
                 fig.add_trace(
                     go.Bar(
                         x=dfg["Datum"],
-                        y=dfg["Tatsächliche Faktura"],
+                        y=dfg["Tatsächliche Wertschöpfung"],
                         name=grp,
                         marker_color=dfg["color"].iloc[0],
                         marker_opacity=dfg["opacity"].tolist(),
@@ -227,9 +227,9 @@ def create_hours_burndown_chart(
         fig.add_trace(
             go.Bar(
                 x=df_bar_res["Datum"],
-                y=df_bar_res["Tatsächliche Faktura"],
-                name="Kumulierte Faktura",
-                text=df_bar_res["Tatsächliche Faktura"],
+                y=df_bar_res["Tatsächliche Wertschöpfung"],
+                name="Kumulierte Wertschöpfung",
+                text=df_bar_res["Tatsächliche Wertschöpfung"],
                 marker_color="#1f77b4",
                 opacity=0.9,
                 textposition="inside",
@@ -248,9 +248,9 @@ def create_hours_burndown_chart(
     )
 
     fig.update_layout(
-        title=f"Kumulative Faktura & Ideallinie ({interval})",
+        title=f"Kumulative Wertschöpfung & Ideallinie ({interval})",
         xaxis_title="",
-        yaxis_title="Kumulative Faktura (PT)",
+        yaxis_title="Kumulative Wertschöpfung (PT)",
         height=500,
         barmode="overlay",
         legend=dict(itemsizing="constant"),

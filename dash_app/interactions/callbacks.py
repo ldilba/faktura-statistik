@@ -1,8 +1,9 @@
 import base64
 import io
+import json
 
 import pandas as pd
-from dash import Output, Input
+from dash import Output, Input, State
 
 from common import data
 
@@ -32,3 +33,27 @@ def register_callbacks(app):
         except Exception as e:
             print(e)
             return None
+
+    @app.callback(
+        Output("faktura-tage", "value"),
+        Output("wertschoepfend-tage", "value"),
+        Input("update-faktura-tage", "n_clicks"),
+        State("faktura-tage", "value"),
+        State("wertschoepfend-tage", "value"),
+    )
+    def update_target_values(n_clicks, faktura_target, wertschoepfend_target):
+        if n_clicks is None:
+            return faktura_target, wertschoepfend_target
+
+        try:
+            # Update config.json with new target values
+            config = {
+                "faktura_target": faktura_target,
+                "wertschoepfend_target": wertschoepfend_target
+            }
+            with open("../config.json", "w") as file:
+                json.dump(config, file, indent=2)
+            return faktura_target, wertschoepfend_target
+        except Exception as e:
+            print(f"Error updating config.json: {e}")
+            return faktura_target, wertschoepfend_target

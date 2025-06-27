@@ -17,18 +17,18 @@ def register_callbacks(app):
         Input("data-all", "data"),
         State("date-picker-range", "start_date"),
         State("date-picker-range", "end_date"),
-        State("faktura-tage", "value"),
+        State("wertschoepfend-tage", "value"),
     )
     def update_hours_burndown(
-        _, __, interval, data_all, start_date, end_date, faktura_tage
+        _, __, interval, data_all, start_date, end_date, wertschoepfend_tage
     ):
-        if not data_all or not data_all["faktura"] or not data_all["all"]:
+        if not data_all or not data_all["wertschoepfend"] or not data_all["all"]:
             return charts.empty_figure(), {}
 
-        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
+        df_wertschoepfend = pd.read_json(StringIO(data_all["wertschoepfend"]))
         df_all = pd.read_json(StringIO(data_all["all"]))
 
         figure, config = processing.create_hours_burndown_chart(
-            df_faktura, df_all, start_date, end_date, interval, int(faktura_tage)
+            df_wertschoepfend, df_all, start_date, end_date, interval, int(wertschoepfend_tage)
         )
         return figure, config

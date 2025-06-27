@@ -9,12 +9,20 @@ def load_config():
     try:
         with open("../config.json", "r") as file:
             config = json.load(file)
-            return config.get("faktura_target", 160)
+            return {
+                "faktura_target": config.get("faktura_target", 160),
+                "wertschoepfend_target": config.get("wertschoepfend_target", 193)
+            }
     except (FileNotFoundError, json.JSONDecodeError):
-        return 160
+        return {
+            "faktura_target": 160,
+            "wertschoepfend_target": 193
+        }
 
 
-faktura_target = load_config()
+config_values = load_config()
+faktura_target = config_values["faktura_target"]
+wertschoepfend_target = config_values["wertschoepfend_target"]
 
 
 def create_layout():
@@ -72,10 +80,17 @@ def create_layout():
                     ),
                     html.Div(
                         [
-                            html.Div("Zielvereinbarung PT:", className="text-gray-700"),
+                            html.Div("Faktura Ziel PT:", className="text-gray-700"),
                             dcc.Input(
                                 value=faktura_target,
                                 id="faktura-tage",
+                                className="p-2 rounded-md border border-gray-300",
+                                type="number",
+                            ),
+                            html.Div("Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"),
+                            dcc.Input(
+                                value=wertschoepfend_target,
+                                id="wertschoepfend-tage",
                                 className="p-2 rounded-md border border-gray-300",
                                 type="number",
                             ),

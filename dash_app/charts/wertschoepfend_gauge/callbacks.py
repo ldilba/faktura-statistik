@@ -16,13 +16,13 @@ def register_callbacks(app):
         Input("data-all", "data"),
         State("date-picker-range", "start_date"),
         State("date-picker-range", "end_date"),
-        State("faktura-tage", "value"),
+        State("wertschoepfend-tage", "value"),
     )
-    def update_gauge_chart(_, __, data_all, start_date, end_date, faktura_tage):
+    def update_gauge_chart(_, __, data_all, start_date, end_date, wertschoepfend_tage):
         if not data_all or not data_all["wertschoepfend"]:
             return charts.empty_figure(), {}
 
         df_wertschoepfend = pd.read_json(StringIO(data_all["wertschoepfend"]))
         df_grouped = data.filter_data_by_date(df_wertschoepfend, start_date, end_date)
-        figure, config = processing.create_gauge_chart(df_grouped, int(faktura_tage))
+        figure, config = processing.create_gauge_chart(df_grouped, int(wertschoepfend_tage))
         return figure, config
