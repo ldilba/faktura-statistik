@@ -9,7 +9,7 @@ def calculate_expected_hours(start, end):
     """
     Berechnet die erwarteten Sollstunden zwischen start und end,
     unter Berücksichtigung von Wochenenden, Feiertagen (NRW) und
-    speziellen Halbtagen (24.12. und 31.03. -> 4 Stunden statt 8).
+    speziellen Halbtagen (24.12. und 31.12. -> 4 Stunden statt 8).
     """
     # Alle Tage im Zeitraum generieren
     all_days = pd.date_range(start, end, freq="D")
@@ -24,9 +24,9 @@ def calculate_expected_hours(start, end):
         day_date = day.date()
         # Nur Wochentage, die keine Feiertage sind
         if day.weekday() < 5 and day_date not in holiday_dates:
-            # Prüfe auf spezielle Halbtage: 24.12. oder 31.03.
+            # Prüfe auf spezielle Halbtage: 24.12. oder 31.12.
             if (day_date.month == 12 and day_date.day == 24) or (
-                day_date.month == 3 and day_date.day == 31
+                day_date.month == 12 and day_date.day == 31
             ):
                 total_hours += 4
             else:
