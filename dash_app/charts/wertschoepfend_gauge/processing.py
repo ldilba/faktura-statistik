@@ -14,7 +14,7 @@ def create_gauge_chart(df_grouped, faktura_target):
             value=total_value,
             delta={"reference": faktura_target},
             title={"text": "Wertschöpfende Stunden"},
-            gauge={"axis": {"range": [0, faktura_target]}},
+            gauge={"axis": {"range": [0, faktura_target]}, "bar": {"color": "#636EFA"}},
             domain={"x": [0, 1], "y": [0, 1]},
         )
     )
