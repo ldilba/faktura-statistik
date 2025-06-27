@@ -35,5 +35,5 @@ def create_layout():
                 className="m-5 p-5 bg-white rounded-xl shadow-lg",
             ),
         ],
-        className="w-full bg-slate-100 min-h-screen",
+        className="w-full bg-slate-100 flex flex-col min-h-screen",
     )
