@@ -86,6 +86,7 @@ def create_layout():
                                 id="faktura-tage",
                                 className="p-2 rounded-md border border-gray-300",
                                 type="number",
+                                step="0.01",
                             ),
                             html.Div("Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"),
                             dcc.Input(
@@ -93,6 +94,7 @@ def create_layout():
                                 id="wertschoepfend-tage",
                                 className="p-2 rounded-md border border-gray-300",
                                 type="number",
+                                step="0.01",
                             ),
                             html.Button(
                                 DashIconify(

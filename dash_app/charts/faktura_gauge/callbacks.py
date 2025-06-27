@@ -24,7 +24,7 @@ def register_callbacks(app):
 
         df_faktura = pd.read_json(StringIO(data_all["faktura"]))
         df_grouped = data.filter_data_by_date(df_faktura, start_date, end_date)
-        figure, config = processing.create_gauge_chart(df_grouped, int(faktura_tage))
+        figure, config = processing.create_gauge_chart(df_grouped, float(faktura_tage))
         return figure, config
 
     @app.callback(
@@ -51,7 +51,7 @@ def register_callbacks(app):
 
         fig_pt, config_pt, fig_hours, config_hours = (
             processing.create_daily_average_indicators(
-                df_faktura, df_all, start_date, end_date, interval, int(faktura_tage)
+                df_faktura, df_all, start_date, end_date, interval, float(faktura_tage)
             )
         )
         return fig_pt, config_pt, fig_hours, config_hours

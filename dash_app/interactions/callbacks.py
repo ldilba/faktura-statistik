@@ -45,15 +45,6 @@ def register_callbacks(app):
         if n_clicks is None:
             return faktura_target, wertschoepfend_target
 
-        try:
-            # Update config.json with new target values
-            config = {
-                "faktura_target": faktura_target,
-                "wertschoepfend_target": wertschoepfend_target
-            }
-            with open("../config.json", "w") as file:
-                json.dump(config, file, indent=2)
-            return faktura_target, wertschoepfend_target
-        except Exception as e:
-            print(f"Error updating config.json: {e}")
-            return faktura_target, wertschoepfend_target
+        # Simply return the current values without updating config.json
+        # The config.json is only used for initial loading
+        return faktura_target, wertschoepfend_target
