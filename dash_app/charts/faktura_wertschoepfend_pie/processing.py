@@ -11,21 +11,21 @@ def create_faktura_wertschoepfend_pie_chart(df_faktura, df_wertschoepfend, df_al
     faktura_sum = df_faktura["Erfasste Menge"].sum()
     wertschoepfend_sum = df_wertschoepfend["Erfasste Menge"].sum()
     all_sum = df_all["Erfasste Menge"].sum()
-    
+
     # Berechne Wertschöpfend (aber nicht Faktura)
     wertschoepfend_not_faktura = wertschoepfend_sum - faktura_sum
-    
+
     # Berechne Non-Faktura
     non_faktura = all_sum - wertschoepfend_sum
-    
+
     # Erstelle ein DataFrame für das Pie-Chart
     data = {
         "Kategorie": ["Faktura", "Wertschöpfend (nicht Faktura)", "Non-Faktura"],
-        "Stunden": [faktura_sum, wertschoepfend_not_faktura, non_faktura],
-        "PT": [faktura_sum / 8, wertschoepfend_not_faktura / 8, non_faktura / 8]
+        "Stunden": [faktura_sum * 8, wertschoepfend_not_faktura * 8, non_faktura * 8],
+        "PT": [faktura_sum, wertschoepfend_not_faktura, non_faktura]
     }
     df_pie = pd.DataFrame(data)
-    
+
     # Erstelle das Pie-Chart
     pie_fig = px.pie(
         df_pie,
@@ -36,13 +36,13 @@ def create_faktura_wertschoepfend_pie_chart(df_faktura, df_wertschoepfend, df_al
         custom_data=["PT"],
         template=None,
     )
-    
+
     # Layout anpassen
     pie_fig.update_layout(
         height=400,
         paper_bgcolor="rgba(255,255,255,0)"
     )
-    
+
     # Prozent-Labels auf dem Chart, Hover mit PT und h
     pie_fig.update_traces(
         textinfo="percent",
@@ -53,6 +53,6 @@ def create_faktura_wertschoepfend_pie_chart(df_faktura, df_wertschoepfend, df_al
             "%{percent}"
         )
     )
-    
+
     config = {"displaylogo": False}
     return pie_fig, config
