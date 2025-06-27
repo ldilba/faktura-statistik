@@ -1,6 +1,14 @@
 import json
 
-from dash import html, dcc, clientside_callback, ClientsideFunction, Output, Input, State
+from dash import (
+    html,
+    dcc,
+    clientside_callback,
+    ClientsideFunction,
+    Output,
+    Input,
+    State,
+)
 from dash_iconify import DashIconify
 from common import data
 
@@ -127,7 +135,9 @@ def create_layout():
                         [
                             html.Div(
                                 [
-                                    html.Div("Faktura Ziel PT:", className="text-gray-700"),
+                                    html.Div(
+                                        "Faktura Ziel PT:", className="text-gray-700"
+                                    ),
                                     dcc.Input(
                                         value=faktura_target,
                                         id="faktura-tage",
@@ -136,7 +146,8 @@ def create_layout():
                                         step="0.01",
                                     ),
                                     html.Div(
-                                        "Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"
+                                        "Wertschöpfend Ziel PT:",
+                                        className="text-gray-700 ml-4",
                                     ),
                                     dcc.Input(
                                         value=wertschoepfend_target,
@@ -211,6 +222,10 @@ def create_layout():
                     ),
                     dcc.Graph(
                         id="ueberstunden-content",
+                        className="rounded-xl bg-white shadow-lg w-1/6",
+                    ),
+                    dcc.Graph(
+                        id="faktura-ueberstunden-content",
                         className="rounded-xl bg-white shadow-lg w-1/6",
                     ),
                 ],

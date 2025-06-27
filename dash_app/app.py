@@ -8,6 +8,9 @@ from charts.burndown_bar import callbacks as burndown_callbacks
 from charts.overview_bar import callbacks as overview_callbacks
 from charts.verhaeltnis_pie import callbacks as verhaeltnis_callbacks
 from charts.ueberstunden_gauge import callbacks as ueberstunden_callbacks
+from charts.faktura_ueberstunden_gauge import (
+    callbacks as faktura_ueberstunden_callbacks,
+)
 from charts.wertschoepfend_gauge import callbacks as wertschoepfend_callbacks
 from charts.faktura_wertschoepfend_pie import (
     callbacks as faktura_wertschoepfend_pie_callbacks,
@@ -37,6 +40,7 @@ verhaeltnis_callbacks.register_callbacks(app)
 faktura_wertschoepfend_pie_callbacks.register_callbacks(app)
 interaction_callbacks.register_callbacks(app)
 ueberstunden_callbacks.register_callbacks(app)
+faktura_ueberstunden_callbacks.register_callbacks(app)
 wertschoepfend_callbacks.register_callbacks(app)
 
 
