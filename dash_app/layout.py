@@ -1,6 +1,6 @@
 import json
 
-from dash import html, dcc, clientside_callback, ClientsideFunction, Output, Input
+from dash import html, dcc, clientside_callback, ClientsideFunction, Output, Input, State
 from dash_iconify import DashIconify
 from common import data
 
@@ -125,32 +125,49 @@ def create_layout():
                     ),
                     html.Div(
                         [
-                            html.Div("Faktura Ziel PT:", className="text-gray-700"),
-                            dcc.Input(
-                                value=faktura_target,
-                                id="faktura-tage",
-                                className="p-2 rounded-md border border-gray-300",
-                                type="number",
-                                step="0.01",
-                            ),
                             html.Div(
-                                "Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"
-                            ),
-                            dcc.Input(
-                                value=wertschoepfend_target,
-                                id="wertschoepfend-tage",
-                                className="p-2 rounded-md border border-gray-300",
-                                type="number",
-                                step="0.01",
+                                [
+                                    html.Div("Faktura Ziel PT:", className="text-gray-700"),
+                                    dcc.Input(
+                                        value=faktura_target,
+                                        id="faktura-tage",
+                                        className="p-2 rounded-md border border-gray-300",
+                                        type="number",
+                                        step="0.01",
+                                    ),
+                                    html.Div(
+                                        "Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"
+                                    ),
+                                    dcc.Input(
+                                        value=wertschoepfend_target,
+                                        id="wertschoepfend-tage",
+                                        className="p-2 rounded-md border border-gray-300",
+                                        type="number",
+                                        step="0.01",
+                                    ),
+                                    html.Button(
+                                        DashIconify(
+                                            icon="heroicons:arrow-path",
+                                            height=24,
+                                            color="#2B7FFF",
+                                        ),
+                                        id="update-faktura-tage",
+                                        className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
+                                    ),
+                                ],
+                                id="settings-container",
+                                className="flex gap-3 items-center",
+                                style={"display": "none"},
                             ),
                             html.Button(
                                 DashIconify(
-                                    icon="heroicons:arrow-path",
+                                    icon="heroicons:cog-6-tooth",
                                     height=24,
                                     color="#2B7FFF",
                                 ),
-                                id="update-faktura-tage",
-                                className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
+                                id="settings-button",
+                                className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200 mr-2",
+                                title="Einstellungen",
                             ),
                             dcc.Dropdown(
                                 id="interval-dropdown",
@@ -161,7 +178,7 @@ def create_layout():
                                 ],
                                 value="D",
                                 clearable=False,
-                                className="w-[250px] ml-4",
+                                className="w-[250px]",
                             ),
                         ],
                         className="flex gap-3 items-center",

@@ -10,6 +10,18 @@ from common import data
 
 def register_callbacks(app):
     @app.callback(
+        Output("settings-container", "style"),
+        Input("settings-button", "n_clicks"),
+        State("settings-container", "style"),
+        prevent_initial_call=True,
+    )
+    def toggle_settings(n_clicks, current_style):
+        if current_style.get("display") == "none":
+            return {"display": "flex"}
+        else:
+            return {"display": "none"}
+
+    @app.callback(
         Output("data-all", "data"),
         Output("toast-data", "data"),
         Output("upload-error-message", "children"),
