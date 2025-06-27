@@ -24,5 +24,7 @@ def register_callbacks(app):
 
         df_wertschoepfend = pd.read_json(StringIO(data_all["wertschoepfend"]))
         df_grouped = data.filter_data_by_date(df_wertschoepfend, start_date, end_date)
-        figure, config = processing.create_gauge_chart(df_grouped, float(wertschoepfend_tage))
+        figure, config = processing.create_gauge_chart(
+            df_grouped, float(wertschoepfend_tage)
+        )
         return figure, config

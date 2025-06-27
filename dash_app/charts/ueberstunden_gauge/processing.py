@@ -58,7 +58,6 @@ def create_verhaeltnis_chart(df_all, start_date, end_date):
         min(end, max_buchungsdatum) if pd.notnull(max_buchungsdatum) else end
     )
 
-
     # Filtere das DataFrame nach Datum
     df_filtered = df_filtered_projects[
         (df_filtered_projects["ProTime-Datum"] >= start)

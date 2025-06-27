@@ -1,4 +1,4 @@
-from dash import Dash
+from dash import Dash, html, dcc, Input, Output
 import layout
 import plotly.io as pio
 
@@ -9,7 +9,9 @@ from charts.overview_bar import callbacks as overview_callbacks
 from charts.verhaeltnis_pie import callbacks as verhaeltnis_callbacks
 from charts.ueberstunden_gauge import callbacks as ueberstunden_callbacks
 from charts.wertschoepfend_gauge import callbacks as wertschoepfend_callbacks
-from charts.faktura_wertschoepfend_pie import callbacks as faktura_wertschoepfend_pie_callbacks
+from charts.faktura_wertschoepfend_pie import (
+    callbacks as faktura_wertschoepfend_pie_callbacks,
+)
 
 from interactions import callbacks as interaction_callbacks
 
@@ -21,8 +23,12 @@ pio.templates.default = "plotly_white"
 
 app = Dash(external_scripts=external_scripts)
 
-app.layout = layout.create_layout()
+# Define the app layout with page content container
+app.layout = html.Div(
+    [dcc.Location(id="url", refresh=False), html.Div(id="page-content")]
+)
 
+# Register callbacks
 faktura_callbacks.register_callbacks(app)
 projects_callbacks.register_callbacks(app)
 burndown_callbacks.register_callbacks(app)
@@ -32,6 +38,18 @@ faktura_wertschoepfend_pie_callbacks.register_callbacks(app)
 interaction_callbacks.register_callbacks(app)
 ueberstunden_callbacks.register_callbacks(app)
 wertschoepfend_callbacks.register_callbacks(app)
+
+
+# Callback for multi-page routing
+@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
+def display_page(pathname):
+    if pathname == "/help":
+        from help_layout import create_layout as help_create_layout
+
+        return help_create_layout()
+    else:
+        return layout.create_layout()
+
 
 server = app.server
 
@@ -47,5 +65,5 @@ if __name__ == "__main__":
         port=8050,
         debug=False,
         dev_tools_ui=False,
-        dev_tools_props_check=False
+        dev_tools_props_check=False,
     )

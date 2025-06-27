@@ -29,12 +29,12 @@ def register_callbacks(app):
 
             # Define required columns
             required_columns = [
-                "Auftrag/Projekt/Kst.", 
-                "Leistung", 
-                "ProTime-Datum", 
-                "Erfasste Menge", 
+                "Auftrag/Projekt/Kst.",
+                "Leistung",
+                "ProTime-Datum",
+                "Erfasste Menge",
                 "Kurztext",
-                "Positionsbezeichnung"
+                "Positionsbezeichnung",
             ]
 
             # Check if all required columns are present
@@ -42,17 +42,23 @@ def register_callbacks(app):
 
             if missing_columns:
                 # Return error message with missing columns
-                error_msg = f"Fehlende Spalten in der Datei: {', '.join(missing_columns)}"
+                error_msg = (
+                    f"Fehlende Spalten in der Datei: {', '.join(missing_columns)}"
+                )
                 return None, {"message": error_msg, "is_open": True}, ""
 
             # Process the data
             df_all, df_faktura, df_wertschoepfend = data.import_data(df)
 
-            return {
-                "all": df_all.to_json(), 
-                "faktura": df_faktura.to_json(),
-                "wertschoepfend": df_wertschoepfend.to_json()
-            }, {"message": "", "is_open": False}, ""
+            return (
+                {
+                    "all": df_all.to_json(),
+                    "faktura": df_faktura.to_json(),
+                    "wertschoepfend": df_wertschoepfend.to_json(),
+                },
+                {"message": "", "is_open": False},
+                "",
+            )
 
         except pd.errors.EmptyDataError:
             error_msg = "Die hochgeladene Datei enthält keine Daten."

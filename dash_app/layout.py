@@ -11,13 +11,10 @@ def load_config():
             config = json.load(file)
             return {
                 "faktura_target": config.get("faktura_target", 160),
-                "wertschoepfend_target": config.get("wertschoepfend_target", 193)
+                "wertschoepfend_target": config.get("wertschoepfend_target", 193),
             }
     except (FileNotFoundError, json.JSONDecodeError):
-        return {
-            "faktura_target": 160,
-            "wertschoepfend_target": 193
-        }
+        return {"faktura_target": 160, "wertschoepfend_target": 193}
 
 
 config_values = load_config()
@@ -26,10 +23,7 @@ wertschoepfend_target = config_values["wertschoepfend_target"]
 
 # Clientside callback for toast notifications
 clientside_callback(
-    ClientsideFunction(
-        namespace="clientside",
-        function_name="update_toast"
-    ),
+    ClientsideFunction(namespace="clientside", function_name="update_toast"),
     Output("toast-container", "className"),
     Output("toast-message", "children"),
     Input("toast-data", "data"),
@@ -44,7 +38,6 @@ def create_layout():
         [
             dcc.Store(id="data-all"),
             dcc.Store(id="toast-data", data={"message": "", "is_open": False}),
-
             # Toast notification
             html.Div(
                 [
@@ -71,19 +64,34 @@ def create_layout():
                         [
                             html.Div(
                                 [
-                                    dcc.Upload(
-                                        id="upload-data",
-                                        children=html.Div(
-                                            [
-                                                "Drag and Drop or ",
-                                                html.A(
-                                                    "Select File",
-                                                    className="text-blue-500",
+                                    html.Div(
+                                        [
+                                            dcc.Upload(
+                                                id="upload-data",
+                                                children=html.Div(
+                                                    [
+                                                        "Drag and Drop or ",
+                                                        html.A(
+                                                            "Select File",
+                                                            className="text-blue-500",
+                                                        ),
+                                                    ]
                                                 ),
-                                            ]
-                                        ),
-                                        className="w-[250px] text-center py-2 cursor-pointer",
-                                        accept=".xlsx",
+                                                className="w-[250px] text-center py-2 cursor-pointer",
+                                                accept=".xlsx",
+                                            ),
+                                            html.A(
+                                                DashIconify(
+                                                    icon="heroicons:question-mark-circle",
+                                                    height=24,
+                                                    color="#2B7FFF",
+                                                ),
+                                                href="/help",
+                                                className="ml-2 p-1 hover:bg-slate-200 rounded-full",
+                                                title="Hilfe",
+                                            ),
+                                        ],
+                                        className="flex items-center",
                                     )
                                 ],
                                 className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
@@ -125,7 +133,9 @@ def create_layout():
                                 type="number",
                                 step="0.01",
                             ),
-                            html.Div("Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"),
+                            html.Div(
+                                "Wertschöpfend Ziel PT:", className="text-gray-700 ml-4"
+                            ),
                             dcc.Input(
                                 value=wertschoepfend_target,
                                 id="wertschoepfend-tage",

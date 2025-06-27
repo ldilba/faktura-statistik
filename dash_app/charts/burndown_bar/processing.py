@@ -20,7 +20,7 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
 
     # Tatsächliche wertschöpfende Stunden berechnen (8 Stunden = 1 PT)
     mask_fact = (df_wertschoepfend["ProTime-Datum"] >= start_date) & (
-            df_wertschoepfend["ProTime-Datum"] <= end_date
+        df_wertschoepfend["ProTime-Datum"] <= end_date
     )
     df_fact = df_wertschoepfend.loc[mask_fact].copy()
     df_fact["Erfasste Menge"] = df_fact["Erfasste Menge"] / 8.0
@@ -38,13 +38,13 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
             (df_all["Positionsbezeichnung"] == "Urlaub")
             & (df_all["ProTime-Datum"] >= start_date)
             & (df_all["ProTime-Datum"] <= end_date)
-            ]
+        ]
         absent_urlaub = set(vacation_rows["ProTime-Datum"].dt.normalize().dt.date)
         krank_rows = df_all.loc[
             (df_all["Positionsbezeichnung"] == "Krank")
             & (df_all["ProTime-Datum"] >= start_date)
             & (df_all["ProTime-Datum"] <= end_date)
-            ]
+        ]
         absent_krank = set(krank_rows["ProTime-Datum"].dt.normalize().dt.date)
 
     # Feiertage in NRW bestimmen
@@ -57,10 +57,10 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
     for day in all_days:
         day_date = day.date()
         if (
-                (day.weekday() < 5)
-                and (day_date not in holiday_dates)
-                and (day_date not in absent_urlaub)
-                and (day_date not in absent_krank)
+            (day.weekday() < 5)
+            and (day_date not in holiday_dates)
+            and (day_date not in absent_urlaub)
+            and (day_date not in absent_krank)
         ):
             available.append(True)
         else:
@@ -140,20 +140,20 @@ def get_fiscal_year_range_for(any_date):
     """
     d = pd.to_datetime(any_date).date()
     if d.month < 4:
-        return (datetime.date(d.year - 1, 4, 1),
-                datetime.date(d.year, 3, 31))
+        return (datetime.date(d.year - 1, 4, 1), datetime.date(d.year, 3, 31))
     else:
-        return (datetime.date(d.year, 4, 1),
-                datetime.date(d.year + 1, 3, 31))
+        return (datetime.date(d.year, 4, 1), datetime.date(d.year + 1, 3, 31))
 
 
 def create_hours_burndown_chart(
-        df_wertschoepfend, df_all, start_date, end_date, interval, wertschoepfend_target
+    df_wertschoepfend, df_all, start_date, end_date, interval, wertschoepfend_target
 ):
     # ---------------------------------------------------------
     #  0) Vorbereitungen
     # ---------------------------------------------------------
-    df_wertschoepfend["ProTime-Datum"] = pd.to_datetime(df_wertschoepfend["ProTime-Datum"], unit="ms")
+    df_wertschoepfend["ProTime-Datum"] = pd.to_datetime(
+        df_wertschoepfend["ProTime-Datum"], unit="ms"
+    )
     df_all["ProTime-Datum"] = pd.to_datetime(df_all["ProTime-Datum"], unit="ms")
 
     # ---------------------------------------------------------
@@ -185,9 +185,9 @@ def create_hours_burndown_chart(
     # ---------------------------------------------------------
     #  5) Resampling (D/W/Monat)
     # ---------------------------------------------------------
-    df_lines = (pd.DataFrame(
-        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values})
-                .set_index("Datum"))
+    df_lines = pd.DataFrame(
+        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values}
+    ).set_index("Datum")
     df_bar = df_bar.set_index("Datum")
 
     freq_map = {"D": None, "W": "W", "ME": "ME"}

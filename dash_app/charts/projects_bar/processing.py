@@ -16,15 +16,11 @@ def create_project_bar_chart(df_grouped):
         template=None,
     )
 
-    bar_fig.update_layout(
-        height=400,
-        paper_bgcolor="rgba(255,255,255,0)"
-    )
+    bar_fig.update_layout(height=400, paper_bgcolor="rgba(255,255,255,0)")
 
     # Texttemplate mit PT und h
     bar_fig.update_traces(
-        texttemplate="%{y:.2f} PT<br>%{customdata[0]:.0f} h",
-        textposition="auto"
+        texttemplate="%{y:.2f} PT<br>%{customdata[0]:.0f} h", textposition="auto"
     )
 
     config = {"displaylogo": False}

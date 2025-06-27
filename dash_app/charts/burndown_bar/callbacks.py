@@ -29,6 +29,11 @@ def register_callbacks(app):
         df_all = pd.read_json(StringIO(data_all["all"]))
 
         figure, config = processing.create_hours_burndown_chart(
-            df_wertschoepfend, df_all, start_date, end_date, interval, float(wertschoepfend_tage)
+            df_wertschoepfend,
+            df_all,
+            start_date,
+            end_date,
+            interval,
+            float(wertschoepfend_tage),
         )
         return figure, config

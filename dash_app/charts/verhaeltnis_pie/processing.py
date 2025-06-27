@@ -17,20 +17,14 @@ def create_verhaeltnis_pie_chart(df_grouped):
     )
 
     # 3) Layout anpassen
-    pie_fig.update_layout(
-        height=400,
-        paper_bgcolor="rgba(255,255,255,0)"
-    )
+    pie_fig.update_layout(height=400, paper_bgcolor="rgba(255,255,255,0)")
 
     # 4) Prozent-Labels auf dem Chart, Hover mit PT und h
     pie_fig.update_traces(
         textinfo="percent",
         hovertemplate=(
-            "%{label}<br>"
-            "%{value} PT<br>"
-            "%{customdata[0]:.2f} h<br>"
-            "%{percent}"
-        )
+            "%{label}<br>" "%{value} PT<br>" "%{customdata[0]:.2f} h<br>" "%{percent}"
+        ),
     )
 
     config = {"displaylogo": False}
