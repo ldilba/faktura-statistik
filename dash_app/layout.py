@@ -186,12 +186,26 @@ def create_layout():
             ),
             html.Div(
                 [
-                    dcc.Graph(
-                        id="verhaeltnis-pie-content",
-                        className="rounded-xl bg-white shadow-lg",
-                    )
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id="verhaeltnis-pie-content",
+                                className="rounded-xl bg-white shadow-lg",
+                            )
+                        ],
+                        className="w-1/2",
+                    ),
+                    html.Div(
+                        [
+                            dcc.Graph(
+                                id="faktura-wertschoepfend-pie-content",
+                                className="rounded-xl bg-white shadow-lg",
+                            )
+                        ],
+                        className="w-1/2",
+                    ),
                 ],
-                className="px-5 w-2/5",
+                className="px-5 flex gap-5 w-4/5",
             ),
         ],
         className="w-full bg-slate-100 flex flex-col gap-4 pb-5",
