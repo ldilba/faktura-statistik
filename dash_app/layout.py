@@ -29,14 +29,17 @@ config_values = load_config()
 faktura_target = config_values["faktura_target"]
 wertschoepfend_target = config_values["wertschoepfend_target"]
 
-# Clientside callback for toast notifications
-clientside_callback(
-    ClientsideFunction(namespace="clientside", function_name="update_toast"),
-    Output("toast-container", "className"),
-    Output("toast-message", "children"),
-    Input("toast-data", "data"),
-    Input("toast-close", "n_clicks"),
-)
+
+def register_clientside_callbacks(app):
+    """Register clientside callbacks for the layout."""
+    # Clientside callback for toast notifications
+    app.clientside_callback(
+        ClientsideFunction(namespace="clientside", function_name="update_toast"),
+        Output("toast-container", "className"),
+        Output("toast-message", "children"),
+        Input("toast-data", "data"),
+        Input("toast-close", "n_clicks"),
+    )
 
 
 def create_layout():

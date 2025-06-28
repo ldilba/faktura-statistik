@@ -43,6 +43,9 @@ ueberstunden_callbacks.register_callbacks(app)
 faktura_ueberstunden_callbacks.register_callbacks(app)
 wertschoepfend_callbacks.register_callbacks(app)
 
+# Register clientside callbacks
+layout.register_clientside_callbacks(app)
+
 
 # Callback for multi-page routing
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
