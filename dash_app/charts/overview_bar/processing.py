@@ -47,6 +47,4 @@ def create_interval_bar_chart(df_all, start_date, end_date, interval):
     fig.update_layout(barmode="stack", paper_bgcolor="rgba(255,255,255,0)")
     fig.update_traces(texttemplate="%{y:.2f}", textposition="auto")
 
-    config = {"displaylogo": False}
-
-    return fig, config
+    return fig

@@ -10,7 +10,6 @@ import pandas as pd
 def register_callbacks(app):
     @app.callback(
         Output("faktura-wertschoepfend-pie-content", "figure"),
-        Output("faktura-wertschoepfend-pie-content", "config"),
         Input("update-date-range", "n_clicks"),
         Input("data-all", "data"),
         State("date-picker-range", "start_date"),
@@ -23,7 +22,7 @@ def register_callbacks(app):
             or not data_all["faktura"]
             or not data_all["wertschoepfend"]
         ):
-            return charts.empty_figure(), {}
+            return charts.empty_figure()
 
         df_all = pd.read_json(StringIO(data_all["all"]))
         df_faktura = pd.read_json(StringIO(data_all["faktura"]))
@@ -36,7 +35,7 @@ def register_callbacks(app):
             df_wertschoepfend, start_date, end_date
         )
 
-        figure, config = processing.create_faktura_wertschoepfend_pie_chart(
+        figure = processing.create_faktura_wertschoepfend_pie_chart(
             df_faktura_filtered, df_wertschoepfend_filtered, df_all_filtered
         )
-        return figure, config
+        return figure

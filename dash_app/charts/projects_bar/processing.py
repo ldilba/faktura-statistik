@@ -23,5 +23,4 @@ def create_project_bar_chart(df_grouped):
         texttemplate="%{y:.2f} PT<br>%{customdata[0]:.0f} h", textposition="auto"
     )
 
-    config = {"displaylogo": False}
-    return bar_fig, config
+    return bar_fig

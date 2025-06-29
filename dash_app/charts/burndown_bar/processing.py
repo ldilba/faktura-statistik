@@ -258,4 +258,4 @@ def create_hours_burndown_chart(
         paper_bgcolor="rgba(255,255,255,0)",
     )
 
-    return fig, {"displaylogo": False}
+    return fig

@@ -9,7 +9,6 @@ import pandas as pd
 def register_callbacks(app):
     @app.callback(
         Output("interval-bar-chart", "figure"),
-        Output("interval-bar-chart", "config"),
         Input("update-date-range", "n_clicks"),
         Input("interval-dropdown", "value"),
         Input("data-all", "data"),
@@ -24,10 +23,10 @@ def register_callbacks(app):
         end_date,
     ):
         if not data_all or not data_all["all"]:
-            return charts.empty_figure(), {}
+            return charts.empty_figure()
 
         df_all = pd.read_json(StringIO(data_all["all"]))
-        figure, config = processing.create_interval_bar_chart(
+        figure = processing.create_interval_bar_chart(
             df_all, start_date, end_date, interval
         )
-        return figure, config
+        return figure

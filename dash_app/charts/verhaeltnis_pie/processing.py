@@ -27,5 +27,4 @@ def create_verhaeltnis_pie_chart(df_grouped):
         ),
     )
 
-    config = {"displaylogo": False}
-    return pie_fig, config
+    return pie_fig

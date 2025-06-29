@@ -22,5 +22,4 @@ def create_gauge_chart(df_grouped, faktura_target):
         paper_bgcolor="rgba(255,255,255,0)",
         margin=dict(t=25, l=50, r=50, b=0),
     )
-    config = {"staticPlot": True}
-    return gauge_fig, config
+    return gauge_fig

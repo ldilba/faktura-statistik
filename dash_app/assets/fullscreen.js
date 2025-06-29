@@ -80,3 +80,17 @@ window.fetch = new Proxy(window.fetch, {
         return result
         }
 })
+
+// alle Plotly-Grafen nach Verlassen des Fullscreen neu berechnen
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {            // wir sind jetzt wieder normal
+    document.querySelectorAll('.js-plotly-plot').forEach(gd => {
+      // Inline-Höhe entfernen, sonst übersteuert sie Tailwind
+      gd.style.height = '';
+      // Plotly neu anpassen
+      if (typeof Plotly !== 'undefined') {
+        Plotly.Plots.resize(gd);
+      }
+    });
+  }
+});

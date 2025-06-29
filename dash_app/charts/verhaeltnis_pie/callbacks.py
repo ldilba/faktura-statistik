@@ -10,7 +10,6 @@ import pandas as pd
 def register_callbacks(app):
     @app.callback(
         Output("verhaeltnis-pie-content", "figure"),
-        Output("verhaeltnis-pie-content", "config"),
         Input("update-date-range", "n_clicks"),
         Input("data-all", "data"),
         State("date-picker-range", "start_date"),
@@ -23,5 +22,5 @@ def register_callbacks(app):
         df = pd.read_json(StringIO(data_all["all"]))
 
         df_grouped = data.filter_data_by_date(df, start_date, end_date)
-        figure, config = processing.create_verhaeltnis_pie_chart(df_grouped)
-        return figure, config
+        figure = processing.create_verhaeltnis_pie_chart(df_grouped)
+        return figure

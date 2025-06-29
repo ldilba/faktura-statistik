@@ -51,5 +51,4 @@ def create_faktura_wertschoepfend_pie_chart(df_faktura, df_wertschoepfend, df_al
         ),
     )
 
-    config = {"displaylogo": False}
-    return pie_fig, config
+    return pie_fig

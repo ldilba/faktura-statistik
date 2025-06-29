@@ -90,5 +90,4 @@ def create_verhaeltnis_chart(df_all, start_date, end_date):
         margin=dict(t=75, l=50, r=50, b=50),
     )
 
-    config = {"displaylogo": False}
-    return fig, config
+    return fig
