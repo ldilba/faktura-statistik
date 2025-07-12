@@ -81,7 +81,10 @@ def create_daily_average_indicators(
         remaining_days = 0
     else:
         remaining_days = data.get_available_days(
-            df_all, start_date=letzter_buchungstag, end_date=end_date_date, vacation_days_pt=vacation_days_pt
+            df_all,
+            start_date=letzter_buchungstag,
+            end_date=end_date_date,
+            vacation_days_pt=vacation_days_pt,
         )
 
     if remaining_days > 0:

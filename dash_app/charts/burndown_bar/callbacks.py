@@ -18,7 +18,15 @@ def register_callbacks(app):
         State("resturlaub-input", "value"),
     )
     def update_hours_burndown(
-        _, __, ___, interval, data_all, start_date, end_date, wertschoepfend_tage, resturlaub_value
+        _,
+        __,
+        ___,
+        interval,
+        data_all,
+        start_date,
+        end_date,
+        wertschoepfend_tage,
+        resturlaub_value,
     ):
         df_wertschoepfend = utils.deserialize_store_data(data_all, "wertschoepfend")
         df_all = utils.deserialize_store_data(data_all, "all")

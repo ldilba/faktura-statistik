@@ -39,7 +39,15 @@ def register_callbacks(app):
         State("resturlaub-input", "value"),
     )
     def update_daily_average(
-        _, __, ___, interval, data_all, start_date, end_date, faktura_tage, resturlaub_value
+        _,
+        __,
+        ___,
+        interval,
+        data_all,
+        start_date,
+        end_date,
+        faktura_tage,
+        resturlaub_value,
     ):
         df_faktura = utils.deserialize_store_data(data_all, "faktura")
         df_all = utils.deserialize_store_data(data_all, "all")
@@ -50,7 +58,13 @@ def register_callbacks(app):
         vacation_days = resturlaub_value if resturlaub_value is not None else 0
         fig_pt, config_pt, fig_hours, config_hours = (
             processing.create_daily_average_indicators(
-                df_faktura, df_all, start_date, end_date, interval, float(faktura_tage), int(vacation_days)
+                df_faktura,
+                df_all,
+                start_date,
+                end_date,
+                interval,
+                float(faktura_tage),
+                int(vacation_days),
             )
         )
         return fig_pt, config_pt, fig_hours, config_hours

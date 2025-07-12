@@ -77,7 +77,7 @@ def get_burndown_data(
             and (day_date not in absent_krank)
         )
         available.append(is_workday)
-    
+
     # Zusätzliche Urlaubstage am Ende abziehen (rückwärts durch die Tage)
     additional_vacation_days = 0
     for i in range(len(all_days) - 1, -1, -1):
@@ -165,28 +165,30 @@ def get_burndown_data(
             # Berechne Steigung pro Tag basierend auf tatsächlichen Buchungen
             days_diff = (last_booked_date - first_booked_date).days
             daily_slope = (last_cum_value - first_cum_value) / days_diff
-            
+
             if vacation_days_pt == 0:
                 # Fall 1: 0 Resturlaub - Linie vom ersten durch letzten Wert, dann mit gleicher Steigung bis Ende
-                
+
                 # Erstelle Prognoselinie für alle Tage
                 for day in all_days:
                     if day <= last_booked_date:
                         # Bis zum letzten gebuchten Tag: gerade Linie durch echte Werte
                         days_from_first = (day - first_booked_date).days
-                        forecast_value = first_cum_value + (daily_slope * days_from_first)
+                        forecast_value = first_cum_value + (
+                            daily_slope * days_from_first
+                        )
                     else:
                         # Nach dem letzten gebuchten Tag: mit gleicher Steigung weiter
                         days_from_last = (day - last_booked_date).days
                         forecast_value = last_cum_value + (daily_slope * days_from_last)
                     forecast_values.append(max(0, forecast_value))
             else:
-                # Fall 2: Mit Resturlaub - letzter Wert wird um Resturlaub-Tage nach rechts verschoben
-                # Verschiebe den Endpunkt um vacation_days_pt Arbeitstage nach rechts
-                extended_end_date = last_booked_date
+                # Fall 2: Mit Resturlaub - Steigung -> Flatline für Urlaubstage -> Steigung weiter
+                # Finde das Ende der Urlaubsperiode (vacation_days_pt Arbeitstage nach letztem gebuchten Tag)
+                vacation_end_date = last_booked_date
                 remaining_vacation_days = vacation_days_pt
-                
-                # Finde das neue Enddatum nach Verschiebung um vacation_days_pt Arbeitstage
+
+                # Finde das Ende der Urlaubsperiode
                 for i, day in enumerate(all_days):
                     if day > last_booked_date and remaining_vacation_days > 0:
                         # Nur Arbeitstage zählen (original available ohne vacation_days_pt Reduktion)
@@ -197,24 +199,27 @@ def get_burndown_data(
                             and (day.date() not in absent_krank)
                         )
                         if original_available:
-                            extended_end_date = day
+                            vacation_end_date = day
                             remaining_vacation_days -= 1
-                
-                # Erstelle Linie vom ersten bis zum verschobenen Endpunkt
-                total_days = (extended_end_date - first_booked_date).days
-                if total_days > 0:
-                    total_slope = (last_cum_value - first_cum_value) / total_days
-                    
-                    for day in all_days:
+
+                # Erstelle Prognoselinie für alle Tage
+                for day in all_days:
+                    if day <= last_booked_date:
+                        # Bis zum letzten gebuchten Tag: gerade Linie durch echte Werte
                         days_from_first = (day - first_booked_date).days
-                        if day <= extended_end_date:
-                            forecast_value = first_cum_value + (total_slope * days_from_first)
-                        else:
-                            # Nach dem verschobenen Endpunkt bleibt der Wert konstant
-                            forecast_value = last_cum_value
-                        forecast_values.append(max(0, forecast_value))
-                else:
-                    forecast_values = [last_cum_value] * len(all_days)
+                        forecast_value = first_cum_value + (
+                            daily_slope * days_from_first
+                        )
+                    elif day <= vacation_end_date:
+                        # Während der Urlaubsperiode: konstant (Flatline)
+                        forecast_value = last_cum_value
+                    else:
+                        # Nach der Urlaubsperiode: mit gleicher Steigung weiter
+                        days_after_vacation = (day - vacation_end_date).days
+                        forecast_value = last_cum_value + (
+                            daily_slope * days_after_vacation
+                        )
+                    forecast_values.append(max(0, forecast_value))
         else:
             forecast_values = [0] * len(all_days)
     else:
@@ -256,14 +261,18 @@ def create_hours_burndown_chart(
     #  1) Arbeitstage im Geschäftsjahr, das zum Auswahl-Intervall gehört
     # ---------------------------------------------------------
     fy_start, fy_end = get_fiscal_year_range_for(start_date)  # ❶
-    total_available_fy = data.get_available_days(df_all, fy_start, fy_end, vacation_days_pt)
+    total_available_fy = data.get_available_days(
+        df_all, fy_start, fy_end, vacation_days_pt
+    )
     if total_available_fy == 0:
         total_available_fy = 1  # division-by-zero-safe
 
     # ---------------------------------------------------------
     #  2) Arbeitstage im ausgewählten Teil-Intervall
     # ---------------------------------------------------------
-    subrange_available = data.get_available_days(df_all, start_date, end_date, vacation_days_pt)
+    subrange_available = data.get_available_days(
+        df_all, start_date, end_date, vacation_days_pt
+    )
 
     # ---------------------------------------------------------
     #  3) Dynamische Ziel-PT
@@ -275,7 +284,12 @@ def create_hours_burndown_chart(
     #  4) Burndown-Daten (täglich)
     # ---------------------------------------------------------
     all_days, actual_cum, ideal_values, forecast_values, df_bar = get_burndown_data(
-        df_wertschoepfend, df_all, start_date, end_date, target=dynamic_target, vacation_days_pt=vacation_days_pt
+        df_wertschoepfend,
+        df_all,
+        start_date,
+        end_date,
+        target=dynamic_target,
+        vacation_days_pt=vacation_days_pt,
     )
 
     # ---------------------------------------------------------

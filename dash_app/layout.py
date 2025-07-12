@@ -129,8 +129,8 @@ def create_layout():
                                         className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
                                     ),
                                     html.Div(
-                                        "Resturlaub (PT):", 
-                                        className="text-gray-700 ml-4"
+                                        "Resturlaub (PT):",
+                                        className="text-gray-700 ml-4",
                                     ),
                                     dcc.Input(
                                         value=0,

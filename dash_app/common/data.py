@@ -129,11 +129,11 @@ def get_available_days(df_all, start_date, end_date, vacation_days_pt=0):
     """
     Gibt die Anzahl der verfügbaren Arbeitstage (Mo–Fr, ohne Feiertage, Urlaub und Krankheit)
     im angegebenen Zeitraum zurück.
-    
+
     Args:
         df_all: DataFrame mit allen Daten
         start_date: Startdatum
-        end_date: Enddatum  
+        end_date: Enddatum
         vacation_days_pt: Zusätzliche Urlaubstage in PT (werden von verfügbaren Tagen abgezogen)
     """
     start_date = pd.to_datetime(start_date).normalize()
@@ -169,10 +169,10 @@ def get_available_days(df_all, start_date, end_date, vacation_days_pt=0):
             and (day not in absent_krank)
         ):
             available_count += 1
-    
+
     # Ziehe zusätzliche Urlaubstage ab (vacation_days_pt ist bereits in Tagen, nicht Stunden)
     available_count = max(0, available_count - vacation_days_pt)
-    
+
     return available_count
 
 
