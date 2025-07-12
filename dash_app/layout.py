@@ -88,7 +88,7 @@ def create_layout():
                                                         ),
                                                     ]
                                                 ),
-                                                className="w-[250px] text-center py-2 cursor-pointer",
+                                                className="w-full sm:w-[250px] text-center py-2 cursor-pointer",
                                                 accept=".xlsx",
                                             ),
                                             html.A(
@@ -102,7 +102,7 @@ def create_layout():
                                                 title="Hilfe",
                                             ),
                                         ],
-                                        className="flex items-center",
+                                        className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-0",
                                     )
                                 ],
                                 className="flex items-center border border-dashed border-slate-300 hover:bg-slate-200 hover:border-blue-500 rounded-md",
@@ -150,10 +150,10 @@ def create_layout():
                                         className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
                                     ),
                                 ],
-                                className="flex gap-3 items-center",
+                                className="flex flex-wrap gap-2 sm:gap-3 items-center",
                             ),
                         ],
-                        className="flex gap-6",
+                        className="flex flex-col lg:flex-row gap-3 lg:gap-6",
                     ),
                     html.Div(
                         [
@@ -171,7 +171,7 @@ def create_layout():
                                     ),
                                     html.Div(
                                         "Wertschöpfend Ziel PT:",
-                                        className="text-gray-700 ml-4",
+                                        className="text-gray-700 ml-2 sm:ml-4",
                                     ),
                                     dcc.Input(
                                         value=wertschoepfend_target,
@@ -191,7 +191,7 @@ def create_layout():
                                     ),
                                 ],
                                 id="settings-container",
-                                className="flex gap-3 items-center",
+                                className="flex flex-wrap gap-2 sm:gap-3 items-center",
                                 style={"display": "none"},
                             ),
                             html.Button(
@@ -213,23 +213,23 @@ def create_layout():
                                 ],
                                 value="D",
                                 clearable=False,
-                                className="w-[250px]",
+                                className="w-full sm:w-[250px]",
                             ),
                         ],
-                        className="flex gap-3 items-center",
+                        className="flex flex-col sm:flex-row gap-3 items-start sm:items-center",
                     ),
                 ],
-                className="flex justify-between items-center mt-4 mx-5",
+                className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mt-4 mx-5",
             ),
             html.Div(
                 [
                     dcc.Graph(
                         id="faktura-total-content",
-                        className="rounded-xl bg-white shadow-lg w-1/6 h-[14rem]",
+                        className="rounded-xl bg-white shadow-lg w-full sm:w-1/2 lg:w-1/5 xl:w-1/6 h-[14rem]",
                     ),
                     dcc.Graph(
                         id="wertschoepfend-total-content",
-                        className="rounded-xl bg-white shadow-lg w-1/6 h-[14rem]",
+                        className="rounded-xl bg-white shadow-lg w-full sm:w-1/2 lg:w-1/5 xl:w-1/6 h-[14rem]",
                     ),
                     html.Div(
                         [
@@ -242,18 +242,18 @@ def create_layout():
                                 className="rounded-xl bg-white shadow-lg h-[6.5rem]",
                             ),
                         ],
-                        className="flex flex-col gap-4 w-1/6",
+                        className="flex flex-col gap-4 w-full sm:w-1/2 lg:w-1/5 xl:w-1/6",
                     ),
                     dcc.Graph(
                         id="ueberstunden-content",
-                        className="rounded-xl bg-white shadow-lg w-1/6",
+                        className="rounded-xl bg-white shadow-lg w-full sm:w-1/2 lg:w-1/5 xl:w-1/6",
                     ),
                     dcc.Graph(
                         id="faktura-ueberstunden-content",
-                        className="rounded-xl bg-white shadow-lg w-1/6",
+                        className="rounded-xl bg-white shadow-lg w-full sm:w-1/2 lg:w-1/5 xl:w-1/6",
                     ),
                 ],
-                className="flex mx-5 gap-5",
+                className="flex flex-wrap justify-center lg:justify-start mx-5 gap-5",
             ),
             html.Div(
                 [
@@ -262,7 +262,7 @@ def create_layout():
                         className="rounded-xl bg-white shadow-lg w-full",
                     )
                 ],
-                className="flex mx-5",
+                className="flex mx-5 mt-5",
             ),
             html.Div(
                 [
@@ -285,7 +285,7 @@ def create_layout():
                         className="w-full min-w-0",
                     ),
                 ],
-                className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-5 px-5 w-full",
+                className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-5 px-5 w-full mt-5",
             ),
             html.Div(
                 [
@@ -296,7 +296,7 @@ def create_layout():
                                 className="rounded-xl bg-white shadow-lg",
                             )
                         ],
-                        className="w-1/2",
+                        className="w-full lg:w-1/2",
                     ),
                     html.Div(
                         [
@@ -305,10 +305,10 @@ def create_layout():
                                 className="rounded-xl bg-white shadow-lg",
                             )
                         ],
-                        className="w-1/2",
+                        className="w-full lg:w-1/2",
                     ),
                 ],
-                className="px-5 flex gap-5 w-4/5",
+                className="px-5 flex flex-col lg:flex-row gap-5 w-full lg:w-4/5 mt-5",
             ),
         ],
         className="w-full bg-slate-100 flex flex-col gap-4 pb-5",
