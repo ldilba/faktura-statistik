@@ -128,6 +128,27 @@ def create_layout():
                                         id="update-date-range",
                                         className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
                                     ),
+                                    html.Div(
+                                        "Resturlaub (PT):", 
+                                        className="text-gray-700 ml-4"
+                                    ),
+                                    dcc.Input(
+                                        value=0,
+                                        id="resturlaub-input",
+                                        className="p-2 rounded-md border border-gray-300 w-20",
+                                        type="number",
+                                        min=0,
+                                        step=1,
+                                    ),
+                                    html.Button(
+                                        DashIconify(
+                                            icon="heroicons:arrow-path",
+                                            height=24,
+                                            color="#2B7FFF",
+                                        ),
+                                        id="update-resturlaub",
+                                        className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-md hover:bg-slate-200",
+                                    ),
                                 ],
                                 className="flex gap-3 items-center",
                             ),

@@ -84,3 +84,15 @@ def register_callbacks(app):
         # Simply return the current values without updating config.json
         # The config.json is only used for initial loading
         return faktura_target, wertschoepfend_target
+
+    @app.callback(
+        Output("resturlaub-input", "value"),
+        Input("update-resturlaub", "n_clicks"),
+        State("resturlaub-input", "value"),
+    )
+    def update_resturlaub_value(n_clicks, resturlaub_value):
+        if n_clicks is None:
+            return resturlaub_value
+
+        # Simply return the current value to trigger update of dependent components
+        return resturlaub_value

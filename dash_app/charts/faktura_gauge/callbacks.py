@@ -30,14 +30,16 @@ def register_callbacks(app):
         Output("faktura-daily-avg-hours-content", "config"),
         Input("update-date-range", "n_clicks"),
         Input("update-faktura-tage", "n_clicks"),
+        Input("update-resturlaub", "n_clicks"),
         Input("interval-dropdown", "value"),
         Input("data-all", "data"),
         State("date-picker-range", "start_date"),
         State("date-picker-range", "end_date"),
         State("faktura-tage", "value"),
+        State("resturlaub-input", "value"),
     )
     def update_daily_average(
-        _, __, interval, data_all, start_date, end_date, faktura_tage
+        _, __, ___, interval, data_all, start_date, end_date, faktura_tage, resturlaub_value
     ):
         df_faktura = utils.deserialize_store_data(data_all, "faktura")
         df_all = utils.deserialize_store_data(data_all, "all")
@@ -45,9 +47,10 @@ def register_callbacks(app):
         if df_faktura is None or df_all is None:
             return charts.empty_figure(), {}, charts.empty_figure(), {}
 
+        vacation_days = resturlaub_value if resturlaub_value is not None else 0
         fig_pt, config_pt, fig_hours, config_hours = (
             processing.create_daily_average_indicators(
-                df_faktura, df_all, start_date, end_date, interval, float(faktura_tage)
+                df_faktura, df_all, start_date, end_date, interval, float(faktura_tage), int(vacation_days)
             )
         )
         return fig_pt, config_pt, fig_hours, config_hours

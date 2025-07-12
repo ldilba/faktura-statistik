@@ -15,6 +15,7 @@ def get_burndown_data(
     start_date: str,
     end_date: str,
     target: float = 160,
+    vacation_days_pt: int = 0,
 ) -> Tuple[pd.DatetimeIndex, pd.Series, List[float], List[float], pd.DataFrame]:
     """
     Berechnet:
@@ -38,6 +39,8 @@ def get_burndown_data(
     df_daily = df_fact.groupby(pd.Grouper(key="ProTime-Datum", freq="D"))[
         "Erfasste Menge"
     ].sum()
+    # Originale tägliche Werte ohne Auffüllung für Prognoselinie
+    df_daily_original = df_daily.copy()
     df_daily = df_daily.reindex(all_days, fill_value=0)
     actual_cum = df_daily.cumsum()
 
@@ -67,15 +70,20 @@ def get_burndown_data(
     available = []
     for day in all_days:
         day_date = day.date()
-        if (
+        is_workday = (
             (day.weekday() < 5)
             and (day_date not in holiday_dates)
             and (day_date not in absent_urlaub)
             and (day_date not in absent_krank)
-        ):
-            available.append(True)
-        else:
-            available.append(False)
+        )
+        available.append(is_workday)
+    
+    # Zusätzliche Urlaubstage am Ende abziehen (rückwärts durch die Tage)
+    additional_vacation_days = 0
+    for i in range(len(all_days) - 1, -1, -1):
+        if available[i] and additional_vacation_days < vacation_days_pt:
+            available[i] = False
+            additional_vacation_days += 1
 
     # Dynamische Ideallinie berechnen
     ideal_values = []
@@ -141,35 +149,72 @@ def get_burndown_data(
         }
     )
 
-    # Prognoselinie berechnen basierend auf tatsächlich gebuchten Daten
+    # Prognoselinie berechnen basierend auf tatsächlich gebuchten Daten (ohne Auffüllung)
     forecast_values = []
-    if not df_fact.empty:
-        # Finde ersten und letzten tatsächlich gebuchten Tag aus den Originaldaten
-        first_booked_date = df_fact["ProTime-Datum"].min()
-        last_booked_date = df_fact["ProTime-Datum"].max()
+    if not df_daily_original.empty:
+        # Finde ersten und letzten tatsächlich gebuchten Tag aus den originalen Daten
+        first_booked_date = df_daily_original.index.min()
+        last_booked_date = df_daily_original.index.max()
 
-        # Hole kumulative Werte zu diesen Zeitpunkten
-        first_cum_value = (
-            actual_cum.loc[first_booked_date]
-            if first_booked_date in actual_cum.index
-            else 0
-        )
-        last_cum_value = (
-            actual_cum.loc[last_booked_date]
-            if last_booked_date in actual_cum.index
-            else 0
-        )
+        # Berechne kumulative Werte basierend auf originalen täglichen Werten
+        df_daily_original_cum = df_daily_original.cumsum()
+        first_cum_value = df_daily_original_cum.loc[first_booked_date]
+        last_cum_value = df_daily_original_cum.loc[last_booked_date]
 
         if first_booked_date != last_booked_date and last_cum_value > first_cum_value:
             # Berechne Steigung pro Tag basierend auf tatsächlichen Buchungen
             days_diff = (last_booked_date - first_booked_date).days
             daily_slope = (last_cum_value - first_cum_value) / days_diff
-
-            # Erstelle Prognoselinie für alle Tage
-            for day in all_days:
-                days_from_first = (day - first_booked_date).days
-                forecast_value = first_cum_value + (daily_slope * days_from_first)
-                forecast_values.append(max(0, forecast_value))  # Keine negativen Werte
+            
+            if vacation_days_pt == 0:
+                # Fall 1: 0 Resturlaub - Linie vom ersten durch letzten Wert, dann mit gleicher Steigung bis Ende
+                
+                # Erstelle Prognoselinie für alle Tage
+                for day in all_days:
+                    if day <= last_booked_date:
+                        # Bis zum letzten gebuchten Tag: gerade Linie durch echte Werte
+                        days_from_first = (day - first_booked_date).days
+                        forecast_value = first_cum_value + (daily_slope * days_from_first)
+                    else:
+                        # Nach dem letzten gebuchten Tag: mit gleicher Steigung weiter
+                        days_from_last = (day - last_booked_date).days
+                        forecast_value = last_cum_value + (daily_slope * days_from_last)
+                    forecast_values.append(max(0, forecast_value))
+            else:
+                # Fall 2: Mit Resturlaub - letzter Wert wird um Resturlaub-Tage nach rechts verschoben
+                # Verschiebe den Endpunkt um vacation_days_pt Arbeitstage nach rechts
+                extended_end_date = last_booked_date
+                remaining_vacation_days = vacation_days_pt
+                
+                # Finde das neue Enddatum nach Verschiebung um vacation_days_pt Arbeitstage
+                for i, day in enumerate(all_days):
+                    if day > last_booked_date and remaining_vacation_days > 0:
+                        # Nur Arbeitstage zählen (original available ohne vacation_days_pt Reduktion)
+                        original_available = (
+                            (day.weekday() < 5)
+                            and (day.date() not in holiday_dates)
+                            and (day.date() not in absent_urlaub)
+                            and (day.date() not in absent_krank)
+                        )
+                        if original_available:
+                            extended_end_date = day
+                            remaining_vacation_days -= 1
+                
+                # Erstelle Linie vom ersten bis zum verschobenen Endpunkt
+                total_days = (extended_end_date - first_booked_date).days
+                if total_days > 0:
+                    total_slope = (last_cum_value - first_cum_value) / total_days
+                    
+                    for day in all_days:
+                        days_from_first = (day - first_booked_date).days
+                        if day <= extended_end_date:
+                            forecast_value = first_cum_value + (total_slope * days_from_first)
+                        else:
+                            # Nach dem verschobenen Endpunkt bleibt der Wert konstant
+                            forecast_value = last_cum_value
+                        forecast_values.append(max(0, forecast_value))
+                else:
+                    forecast_values = [last_cum_value] * len(all_days)
         else:
             forecast_values = [0] * len(all_days)
     else:
@@ -197,6 +242,7 @@ def create_hours_burndown_chart(
     end_date: str,
     interval: str,
     wertschoepfend_target: float,
+    vacation_days_pt: int = 0,
 ) -> Tuple[go.Figure, Dict[str, Any]]:
     # ---------------------------------------------------------
     #  0) Vorbereitungen
@@ -210,14 +256,14 @@ def create_hours_burndown_chart(
     #  1) Arbeitstage im Geschäftsjahr, das zum Auswahl-Intervall gehört
     # ---------------------------------------------------------
     fy_start, fy_end = get_fiscal_year_range_for(start_date)  # ❶
-    total_available_fy = data.get_available_days(df_all, fy_start, fy_end)
+    total_available_fy = data.get_available_days(df_all, fy_start, fy_end, vacation_days_pt)
     if total_available_fy == 0:
         total_available_fy = 1  # division-by-zero-safe
 
     # ---------------------------------------------------------
     #  2) Arbeitstage im ausgewählten Teil-Intervall
     # ---------------------------------------------------------
-    subrange_available = data.get_available_days(df_all, start_date, end_date)
+    subrange_available = data.get_available_days(df_all, start_date, end_date, vacation_days_pt)
 
     # ---------------------------------------------------------
     #  3) Dynamische Ziel-PT
@@ -229,7 +275,7 @@ def create_hours_burndown_chart(
     #  4) Burndown-Daten (täglich)
     # ---------------------------------------------------------
     all_days, actual_cum, ideal_values, forecast_values, df_bar = get_burndown_data(
-        df_wertschoepfend, df_all, start_date, end_date, target=dynamic_target
+        df_wertschoepfend, df_all, start_date, end_date, target=dynamic_target, vacation_days_pt=vacation_days_pt
     )
 
     # ---------------------------------------------------------
