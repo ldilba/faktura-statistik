@@ -87,17 +87,99 @@ def get_burndown_data(
 
     # Dynamische Ideallinie berechnen
     ideal_values = []
-    cumulative = 0.0
-    remaining_target = float(target)
-    for i, day in enumerate(all_days):
-        if available[i]:
-            remaining_available = sum(available[i:])
-            daily_increment = (
-                remaining_target / remaining_available if remaining_available > 0 else 0
+    
+    # Finde letzten gebuchten Tag für Flatline-Logik
+    last_booked_date = None
+    if not df_daily_original.empty:
+        last_booked_date = df_daily_original.index.max()
+    
+    if vacation_days_pt == 0 or last_booked_date is None:
+        # Ohne Urlaubstage oder keine Buchungen: normale dynamische Berechnung
+        cumulative = 0.0
+        remaining_target = float(target)
+        for i, day in enumerate(all_days):
+            if available[i]:
+                remaining_available = sum(available[i:])
+                daily_increment = (
+                    remaining_target / remaining_available if remaining_available > 0 else 0
+                )
+                cumulative += daily_increment
+                remaining_target -= daily_increment
+            ideal_values.append(cumulative)
+    else:
+        # Mit Urlaubstagen: Flatline nach letztem gebuchten Tag
+        # Finde Urlaubsperiode-Ende (gleiche Logik wie bei Prognoselinie)
+        vacation_end_date = last_booked_date
+        remaining_vacation_days = vacation_days_pt
+        holiday_dates = set()
+        if vacation_days_pt > 0:
+            years = list(range(last_booked_date.year, last_booked_date.year + 2))
+            nrw_holidays = holidays.Germany(prov="NW", years=years)
+            holiday_dates = set(nrw_holidays.keys())
+            
+            # Berechne Abwesenheiten
+            absent_urlaub = set()
+            absent_krank = set()
+            if "Positionsbezeichnung" in df_all.columns:
+                vacation_rows = df_all.loc[df_all["Positionsbezeichnung"] == "Urlaub"]
+                absent_urlaub = set(vacation_rows["ProTime-Datum"].dt.normalize().dt.date)
+                krank_rows = df_all.loc[df_all["Positionsbezeichnung"] == "Krank"]
+                absent_krank = set(krank_rows["ProTime-Datum"].dt.normalize().dt.date)
+        
+            for day in all_days:
+                if day > last_booked_date and remaining_vacation_days > 0:
+                    original_available = (
+                        (day.weekday() < 5)
+                        and (day.date() not in holiday_dates)
+                        and (day.date() not in absent_urlaub)
+                        and (day.date() not in absent_krank)
+                    )
+                    if original_available:
+                        vacation_end_date = day
+                        remaining_vacation_days -= 1
+        
+        # Berechne Ideallinie mit drei Phasen
+        cumulative = 0.0
+        remaining_target = float(target)
+        
+        # Berechne ursprünglich verfügbare Arbeitstage (ohne vacation_days_pt Abzug)
+        original_available = []
+        for day in all_days:
+            day_date = day.date()
+            is_workday = (
+                (day.weekday() < 5)
+                and (day_date not in holiday_dates)
+                and (day_date not in absent_urlaub)
+                and (day_date not in absent_krank)
             )
-            cumulative += daily_increment
-            remaining_target -= daily_increment
-        ideal_values.append(cumulative)
+            original_available.append(is_workday)
+        
+        # Berechne verfügbare Tage für Zielverteilung
+        available_until_last = sum(1 for j, d in enumerate(all_days) if d <= last_booked_date and original_available[j])
+        available_after_vacation = sum(1 for j, d in enumerate(all_days) if d > vacation_end_date and original_available[j])
+        total_work_days = available_until_last + available_after_vacation
+        
+        if total_work_days > 0:
+            daily_increment = target / total_work_days
+        else:
+            daily_increment = 0
+        
+        # Phase 1: Bis letzter gebuchter Tag
+        for i, day in enumerate(all_days):
+            if day <= last_booked_date:
+                if original_available[i]:
+                    cumulative += daily_increment
+                    remaining_target -= daily_increment
+                ideal_values.append(cumulative)
+            elif day <= vacation_end_date:
+                # Phase 2: Urlaubsperiode - Flatline
+                ideal_values.append(cumulative)
+            else:
+                # Phase 3: Nach Urlaubsperiode
+                if original_available[i]:
+                    cumulative += daily_increment
+                    remaining_target -= daily_increment
+                ideal_values.append(cumulative)
 
     # Zusätzliche Daten für den Bar-Plot (z. B. zur individuellen Formatierung)
     if not df_all.empty:
