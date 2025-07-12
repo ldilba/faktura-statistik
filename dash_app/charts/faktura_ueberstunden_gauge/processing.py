@@ -79,15 +79,44 @@ def create_faktura_ueberstunden_chart(
         .reset_index()
     )
 
-    # Berechne die Faktura-Überstunden pro Tag (Stunden über 8 pro Tag)
-    df_daily["Faktura_Ueberstunden"] = df_daily["Erfasste Menge"].apply(
-        lambda x: max(0, x - HOURS_PER_PT)
-    )
+    # Feiertage in NRW bestimmen für den Zeitraum
+    years = list(range(start.year, effective_end.year + 1))
+    nrw_holidays = holidays.Germany(prov="NW", years=years)
+    holiday_dates = set(nrw_holidays.keys())
 
-    # Berechne die Minderstunden pro Tag (Stunden unter 8 pro Tag)
-    df_daily["Minderstunden"] = df_daily["Erfasste Menge"].apply(
-        lambda x: min(0, x - HOURS_PER_PT)
-    )
+    # Berechne die Faktura-Überstunden pro Tag unter Berücksichtigung von Arbeitstagen
+    faktura_ueberstunden_list = []
+    minderstunden_list = []
+    
+    for _, row in df_daily.iterrows():
+        day_date = row["ProTime-Datum"]
+        hours_worked = row["Erfasste Menge"]
+        
+        # Prüfe ob es ein Arbeitstag ist (Mo-Fr, kein Feiertag)
+        is_workday = day_date.weekday() < 5 and day_date not in holiday_dates
+        
+        if is_workday:
+            # Prüfe auf spezielle Halbtage: 24.12. oder 31.12.
+            if (day_date.month == 12 and day_date.day == 24) or (
+                day_date.month == 12 and day_date.day == 31
+            ):
+                expected_hours = 4
+            else:
+                expected_hours = HOURS_PER_PT
+            
+            # Berechne Überstunden und Minderstunden für Arbeitstage
+            ueberstunden = max(0, hours_worked - expected_hours)
+            minderstunden = min(0, hours_worked - expected_hours)
+        else:
+            # An Wochenenden/Feiertagen sind alle Stunden Überstunden
+            ueberstunden = hours_worked
+            minderstunden = 0
+        
+        faktura_ueberstunden_list.append(ueberstunden)
+        minderstunden_list.append(minderstunden)
+    
+    df_daily["Faktura_Ueberstunden"] = faktura_ueberstunden_list
+    df_daily["Minderstunden"] = minderstunden_list
 
     # Summe der Faktura-Überstunden und Minderstunden
     faktura_ueberstunden = df_daily["Faktura_Ueberstunden"].sum()
