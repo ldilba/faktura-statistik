@@ -399,6 +399,39 @@ def create_hours_burndown_chart(
 
     df_lines_res = df_lines_res.reset_index()
     df_bar_res = df_bar_res.reset_index()
+    
+    # Berechne PT-Rate (Steigung) für Hover
+    def calculate_rate(values, interval_type):
+        """Berechnet die PT-Rate basierend auf der Steigung zwischen aufeinanderfolgenden Punkten"""
+        rates = []
+        multiplier = {"D": 1, "W": 7, "ME": 30}[interval_type] if interval_type in ["D", "W", "ME"] else 1
+        
+        for i in range(len(values)):
+            if i == 0:
+                # Für ersten Punkt: Rate zwischen erstem und zweitem Punkt
+                if len(values) > 1:
+                    rate = (values[1] - values[0]) * multiplier
+                else:
+                    rate = 0
+            elif i == len(values) - 1:
+                # Für letzten Punkt: Rate zwischen vorletztem und letztem Punkt
+                rate = (values[i] - values[i-1]) * multiplier
+            else:
+                # Für mittlere Punkte: Durchschnitt der Rate vor und nach dem Punkt
+                rate_before = values[i] - values[i-1]
+                rate_after = values[i+1] - values[i]
+                rate = ((rate_before + rate_after) / 2) * multiplier
+            rates.append(max(0, rate))  # Keine negativen Raten
+        return rates
+    
+    interval_type = interval if interval != "D" else "D"
+    ideal_rates = calculate_rate(df_lines_res["ideal"].tolist(), interval_type)
+    forecast_rates = calculate_rate(df_lines_res["forecast"].tolist(), interval_type)
+    
+    df_lines_res["ideal_rate"] = ideal_rates
+    df_lines_res["forecast_rate"] = forecast_rates
+    df_lines_res["ideal_rate_hours"] = [rate * 8 for rate in ideal_rates]
+    df_lines_res["forecast_rate_hours"] = [rate * 8 for rate in forecast_rates]
 
     # ---------------------------------------------------------
     #  6) Plot
@@ -434,6 +467,9 @@ def create_hours_burndown_chart(
             )
         )
 
+    # Bestimme Intervall-Label für Hover
+    interval_label = {"D": "Tag", "W": "Woche", "ME": "Monat"}[interval]
+    
     fig.add_trace(
         go.Scatter(
             x=df_lines_res["Datum"],
@@ -441,6 +477,13 @@ def create_hours_burndown_chart(
             mode="lines",
             name="Ideallinie",
             line=dict(color="red"),
+            customdata=list(zip(df_lines_res["ideal_rate"], df_lines_res["ideal_rate_hours"])),
+            hovertemplate="<b>Ideallinie</b><br>" +
+                         "Datum: %{x}<br>" +
+                         "Kumulativ: %{y:.2f} PT<br>" +
+                         "Rate: %{customdata[0]:.2f} PT/" + interval_label + "<br>" +
+                         "Rate: %{customdata[1]:.0f} h/" + interval_label +
+                         "<extra></extra>",
         )
     )
 
@@ -451,6 +494,13 @@ def create_hours_burndown_chart(
             mode="lines",
             name="Prognose",
             line=dict(color="grey", dash="dot"),
+            customdata=list(zip(df_lines_res["forecast_rate"], df_lines_res["forecast_rate_hours"])),
+            hovertemplate="<b>Prognose</b><br>" +
+                         "Datum: %{x}<br>" +
+                         "Kumulativ: %{y:.2f} PT<br>" +
+                         "Rate: %{customdata[0]:.2f} PT/" + interval_label + "<br>" +
+                         "Rate: %{customdata[1]:.0f} h/" + interval_label +
+                         "<extra></extra>",
         )
     )
 
