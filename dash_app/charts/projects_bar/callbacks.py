@@ -1,9 +1,6 @@
-from io import StringIO
-
 from dash import Output, Input, State
-from common import data, charts
+from common import data, charts, utils
 from charts.projects_bar import processing
-import pandas as pd
 
 
 def register_callbacks(app):
@@ -16,10 +13,9 @@ def register_callbacks(app):
         State("date-picker-range", "end_date"),
     )
     def update_project_bar(_, data_all, start_date, end_date):
-        if not data_all or not data_all["faktura"]:
+        df = utils.deserialize_store_data(data_all, "faktura")
+        if df is None:
             return charts.empty_figure(), {}
-
-        df = pd.read_json(StringIO(data_all["faktura"]))
 
         df_grouped = data.filter_data_by_date(df, start_date, end_date)
         figure, config = processing.create_project_bar_chart(df_grouped)

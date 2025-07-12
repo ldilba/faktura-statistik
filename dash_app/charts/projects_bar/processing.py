@@ -1,9 +1,17 @@
+from typing import Tuple, Dict, Any
+
 import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+
+from common.constants import HOURS_PER_PT, DEFAULT_BAR_HEIGHT
 
 
-def create_project_bar_chart(df_grouped):
+def create_project_bar_chart(
+    df_grouped: pd.DataFrame,
+) -> Tuple[go.Figure, Dict[str, Any]]:
     # Stunden berechnen
-    df_grouped["hours"] = df_grouped["Erfasste Menge"] * 8
+    df_grouped["hours"] = df_grouped["Erfasste Menge"] * HOURS_PER_PT
 
     # Bar-Chart, custom_data enthält jetzt die hours-Spalte
     bar_fig = px.bar(
@@ -16,7 +24,9 @@ def create_project_bar_chart(df_grouped):
         template=None,
     )
 
-    bar_fig.update_layout(height=400, paper_bgcolor="rgba(255,255,255,0)")
+    bar_fig.update_layout(
+        height=DEFAULT_BAR_HEIGHT, paper_bgcolor="rgba(255,255,255,0)"
+    )
 
     # Texttemplate mit PT und h
     bar_fig.update_traces(

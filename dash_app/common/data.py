@@ -2,6 +2,13 @@ import pandas as pd
 import datetime
 import holidays
 import re
+from common import utils
+from common.constants import (
+    FAKTURA_PROJECT_PREFIXES,
+    WERTSCHOEPFEND_PROJECT_PREFIX,
+    ALLGEMEIN_PROJECT,
+    REQUIRED_COLUMNS,
+)
 
 _LEISTUNG_STUNDE_RX = re.compile(r"\bStunde\b", flags=re.I)
 _LEISTUNG_NON_FAKT_RX = re.compile(r"nicht\s*fakturierte\s*stunde", flags=re.I)
@@ -21,7 +28,7 @@ def preprocess_leistung(df: pd.DataFrame) -> pd.DataFrame:
     # ----------------------------------------------------------
     mask_non_fakt_on_fakt_proj = (
         df["Auftrag/Projekt/Kst."].notna()
-        & df["Auftrag/Projekt/Kst."].str.startswith(("K", "X"))
+        & df["Auftrag/Projekt/Kst."].str.startswith(FAKTURA_PROJECT_PREFIXES)
         & df["Leistung"].str.contains(_LEISTUNG_NON_FAKT_RX, na=False)
     )
     df.loc[mask_non_fakt_on_fakt_proj, "Auftrag/Projekt/Kst."] = (
@@ -42,7 +49,7 @@ def split_allgemein(df):
     'Positionsbezeichnung' ersetzt. Falls mehrere Projekte (z. B. kommasepariert)
     vorhanden sind, wird in mehrere Zeilen aufgeteilt.
     """
-    mask = df["Kurztext"] == "Stunden - CONET Solutions GmbH"
+    mask = df["Kurztext"] == ALLGEMEIN_PROJECT
     if "Positionsbezeichnung" in df.columns:
         df.loc[mask, "Kurztext"] = df.loc[mask, "Positionsbezeichnung"].apply(
             lambda x: (
@@ -114,7 +121,7 @@ def filter_data_by_date(df, start_date, end_date):
     df_grouped = df_filtered.groupby(
         ["Auftrag/Projekt/Kst.", "Kurztext"], as_index=False
     )["Erfasste Menge"].sum()
-    df_grouped["Erfasste Menge"] = df_grouped["Erfasste Menge"] / 8
+    df_grouped["Erfasste Menge"] = df_grouped["Erfasste Menge"] / utils.HOURS_PER_PT
     return df_grouped
 
 
@@ -176,7 +183,7 @@ def get_wertschoepfende_projects(df):
     # Nicht-fakturierte Stunden in K-Projekten
     mask_non_fakt_k_proj = (
         df["Auftrag/Projekt/Kst."].notna()
-        & df["Auftrag/Projekt/Kst."].str.startswith("K")
+        & df["Auftrag/Projekt/Kst."].str.startswith(WERTSCHOEPFEND_PROJECT_PREFIX)
         & df["Leistung"].str.contains(_LEISTUNG_NON_FAKT_RX, na=False)
     )
 

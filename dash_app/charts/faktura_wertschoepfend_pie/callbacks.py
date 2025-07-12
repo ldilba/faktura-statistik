@@ -1,10 +1,6 @@
-from io import StringIO
-
 from dash import Output, Input, State
-
 from charts.faktura_wertschoepfend_pie import processing
-from common import data, charts
-import pandas as pd
+from common import data, charts, utils
 
 
 def register_callbacks(app):
@@ -17,17 +13,12 @@ def register_callbacks(app):
         State("date-picker-range", "end_date"),
     )
     def update_faktura_wertschoepfend_pie(_, data_all, start_date, end_date):
-        if (
-            not data_all
-            or not data_all["all"]
-            or not data_all["faktura"]
-            or not data_all["wertschoepfend"]
-        ):
-            return charts.empty_figure(), {}
+        df_all = utils.deserialize_store_data(data_all, "all")
+        df_faktura = utils.deserialize_store_data(data_all, "faktura")
+        df_wertschoepfend = utils.deserialize_store_data(data_all, "wertschoepfend")
 
-        df_all = pd.read_json(StringIO(data_all["all"]))
-        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
-        df_wertschoepfend = pd.read_json(StringIO(data_all["wertschoepfend"]))
+        if df_all is None or df_faktura is None or df_wertschoepfend is None:
+            return charts.empty_figure(), {}
 
         # Filter data by date
         df_all_filtered = data.filter_data_by_date(df_all, start_date, end_date)

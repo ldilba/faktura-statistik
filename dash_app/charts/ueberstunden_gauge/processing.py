@@ -1,11 +1,14 @@
+from typing import Tuple, Dict, Any
+
 import plotly.graph_objects as go
 import pandas as pd
 import holidays
 
 from common import data
+from common.constants import HOURS_PER_PT, INDICATOR_MARGINS
 
 
-def calculate_expected_hours(start, end):
+def calculate_expected_hours(start: pd.Timestamp, end: pd.Timestamp) -> int:
     """
     Berechnet die erwarteten Sollstunden zwischen start und end,
     unter Berücksichtigung von Wochenenden, Feiertagen (NRW) und
@@ -30,11 +33,13 @@ def calculate_expected_hours(start, end):
             ):
                 total_hours += 4
             else:
-                total_hours += 8
+                total_hours += HOURS_PER_PT
     return total_hours
 
 
-def create_verhaeltnis_chart(df_all, start_date, end_date):
+def create_verhaeltnis_chart(
+    df_all: pd.DataFrame, start_date: str, end_date: str
+) -> Tuple[go.Figure, Dict[str, Any]]:
     """
     Erstellt ein Indicator-Chart, das die Über-/Unterstunden anzeigt.
 
@@ -87,7 +92,7 @@ def create_verhaeltnis_chart(df_all, start_date, end_date):
     )
     fig.update_layout(
         paper_bgcolor="rgba(255,255,255,0)",
-        margin=dict(t=75, l=50, r=50, b=50),
+        margin=INDICATOR_MARGINS,
     )
 
     config = {"displaylogo": False}

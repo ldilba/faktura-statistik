@@ -1,8 +1,15 @@
+from typing import Tuple, Dict, Any, Optional
+
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
+from common import utils
 
-def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval):
+
+def filter_and_aggregate_by_interval_stacked(
+    df: pd.DataFrame, start_date: str, end_date: str, interval: Optional[str]
+) -> pd.DataFrame:
     """
     Filtert das komplette Dataset nach Datum und aggregiert die 'Erfasste Menge'
     je nach gewähltem Intervall (z. B. täglich, wöchentlich oder monatlich) und
@@ -25,7 +32,9 @@ def filter_and_aggregate_by_interval_stacked(df, start_date, end_date, interval)
     return df_agg
 
 
-def create_interval_bar_chart(df_all, start_date, end_date, interval):
+def create_interval_bar_chart(
+    df_all: pd.DataFrame, start_date: str, end_date: str, interval: str
+) -> Tuple[go.Figure, Dict[str, Any]]:
     df_agg = filter_and_aggregate_by_interval_stacked(
         df_all, start_date, end_date, interval
     )
@@ -41,12 +50,12 @@ def create_interval_bar_chart(df_all, start_date, end_date, interval):
             "Erfasste Menge": "Stunden",
             "Kurztext": "Projekt",
         },
-        height=400,
+        height=utils.DEFAULT_BAR_HEIGHT,
         template=None,
     )
-    fig.update_layout(barmode="stack", paper_bgcolor="rgba(255,255,255,0)")
+    utils.apply_transparent_background(fig)
+    fig.update_layout(barmode="stack")
     fig.update_traces(texttemplate="%{y:.2f}", textposition="auto")
 
-    config = {"displaylogo": False}
-
+    config = utils.standard_chart_config(displaylogo=False)
     return fig, config

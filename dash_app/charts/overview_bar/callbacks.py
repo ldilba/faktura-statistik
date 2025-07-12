@@ -1,9 +1,6 @@
-from io import StringIO
-
 from dash import Output, Input, State
 from charts.overview_bar import processing
-from common import charts
-import pandas as pd
+from common import charts, utils
 
 
 def register_callbacks(app):
@@ -23,10 +20,9 @@ def register_callbacks(app):
         start_date,
         end_date,
     ):
-        if not data_all or not data_all["all"]:
+        df_all = utils.deserialize_store_data(data_all, "all")
+        if df_all is None:
             return charts.empty_figure(), {}
-
-        df_all = pd.read_json(StringIO(data_all["all"]))
         figure, config = processing.create_interval_bar_chart(
             df_all, start_date, end_date, interval
         )

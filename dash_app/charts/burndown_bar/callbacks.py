@@ -1,10 +1,6 @@
-from io import StringIO
-
 from dash import Output, Input, State
 from charts.burndown_bar import processing
-from common import charts
-
-import pandas as pd
+from common import charts, utils
 
 
 def register_callbacks(app):
@@ -22,11 +18,11 @@ def register_callbacks(app):
     def update_hours_burndown(
         _, __, interval, data_all, start_date, end_date, wertschoepfend_tage
     ):
-        if not data_all or not data_all["wertschoepfend"] or not data_all["all"]:
-            return charts.empty_figure(), {}
+        df_wertschoepfend = utils.deserialize_store_data(data_all, "wertschoepfend")
+        df_all = utils.deserialize_store_data(data_all, "all")
 
-        df_wertschoepfend = pd.read_json(StringIO(data_all["wertschoepfend"]))
-        df_all = pd.read_json(StringIO(data_all["all"]))
+        if df_wertschoepfend is None or df_all is None:
+            return charts.empty_figure(), {}
 
         figure, config = processing.create_hours_burndown_chart(
             df_wertschoepfend,

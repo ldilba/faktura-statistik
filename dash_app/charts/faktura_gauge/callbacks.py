@@ -1,10 +1,6 @@
-from io import StringIO
-
 from dash import Output, Input, State
-from common import data, charts
+from common import data, charts, utils
 from charts.faktura_gauge import processing
-
-import pandas as pd
 
 
 def register_callbacks(app):
@@ -19,10 +15,10 @@ def register_callbacks(app):
         State("faktura-tage", "value"),
     )
     def update_gauge_chart(_, __, data_all, start_date, end_date, faktura_tage):
-        if not data_all or not data_all["faktura"]:
+        df_faktura = utils.deserialize_store_data(data_all, "faktura")
+        if df_faktura is None:
             return charts.empty_figure(), {}
 
-        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
         df_grouped = data.filter_data_by_date(df_faktura, start_date, end_date)
         figure, config = processing.create_gauge_chart(df_grouped, float(faktura_tage))
         return figure, config
@@ -43,11 +39,11 @@ def register_callbacks(app):
     def update_daily_average(
         _, __, interval, data_all, start_date, end_date, faktura_tage
     ):
-        if not data_all or not data_all["faktura"] or not data_all["all"]:
-            return charts.empty_figure(), {}, charts.empty_figure(), {}
+        df_faktura = utils.deserialize_store_data(data_all, "faktura")
+        df_all = utils.deserialize_store_data(data_all, "all")
 
-        df_faktura = pd.read_json(StringIO(data_all["faktura"]))
-        df_all = pd.read_json(StringIO(data_all["all"]))
+        if df_faktura is None or df_all is None:
+            return charts.empty_figure(), {}, charts.empty_figure(), {}
 
         fig_pt, config_pt, fig_hours, config_hours = (
             processing.create_daily_average_indicators(

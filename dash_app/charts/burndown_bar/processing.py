@@ -1,11 +1,21 @@
+from typing import Tuple, Dict, Any, List
 import datetime
+
 import plotly.graph_objects as go
 import pandas as pd
 import holidays
+
 from common import data
+from common.constants import HOURS_PER_PT
 
 
-def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=160):
+def get_burndown_data(
+    df_wertschoepfend: pd.DataFrame,
+    df_all: pd.DataFrame,
+    start_date: str,
+    end_date: str,
+    target: float = 160,
+) -> Tuple[pd.DatetimeIndex, pd.Series, List[float], List[float], pd.DataFrame]:
     """
     Berechnet:
       - Die kumulative tatsächliche wertschöpfende Stunden (in PT) basierend auf df_wertschoepfend.
@@ -24,7 +34,7 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
         df_wertschoepfend["ProTime-Datum"] <= end_date
     )
     df_fact = df_wertschoepfend.loc[mask_fact].copy()
-    df_fact["Erfasste Menge"] = df_fact["Erfasste Menge"] / 8.0
+    df_fact["Erfasste Menge"] = df_fact["Erfasste Menge"] / HOURS_PER_PT
     df_daily = df_fact.groupby(pd.Grouper(key="ProTime-Datum", freq="D"))[
         "Erfasste Menge"
     ].sum()
@@ -137,16 +147,24 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
         # Finde ersten und letzten tatsächlich gebuchten Tag aus den Originaldaten
         first_booked_date = df_fact["ProTime-Datum"].min()
         last_booked_date = df_fact["ProTime-Datum"].max()
-        
+
         # Hole kumulative Werte zu diesen Zeitpunkten
-        first_cum_value = actual_cum.loc[first_booked_date] if first_booked_date in actual_cum.index else 0
-        last_cum_value = actual_cum.loc[last_booked_date] if last_booked_date in actual_cum.index else 0
-        
+        first_cum_value = (
+            actual_cum.loc[first_booked_date]
+            if first_booked_date in actual_cum.index
+            else 0
+        )
+        last_cum_value = (
+            actual_cum.loc[last_booked_date]
+            if last_booked_date in actual_cum.index
+            else 0
+        )
+
         if first_booked_date != last_booked_date and last_cum_value > first_cum_value:
             # Berechne Steigung pro Tag basierend auf tatsächlichen Buchungen
             days_diff = (last_booked_date - first_booked_date).days
             daily_slope = (last_cum_value - first_cum_value) / days_diff
-            
+
             # Erstelle Prognoselinie für alle Tage
             for day in all_days:
                 days_from_first = (day - first_booked_date).days
@@ -160,7 +178,7 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
     return all_days, actual_cum, ideal_values, forecast_values, df_bar
 
 
-def get_fiscal_year_range_for(any_date):
+def get_fiscal_year_range_for(any_date: str) -> Tuple[datetime.date, datetime.date]:
     """
     Liefert das Geschäftsjahr (01.04.–31.03.), das `any_date`
     enthält. akzeptiert str, Timestamp oder date.
@@ -173,8 +191,13 @@ def get_fiscal_year_range_for(any_date):
 
 
 def create_hours_burndown_chart(
-    df_wertschoepfend, df_all, start_date, end_date, interval, wertschoepfend_target
-):
+    df_wertschoepfend: pd.DataFrame,
+    df_all: pd.DataFrame,
+    start_date: str,
+    end_date: str,
+    interval: str,
+    wertschoepfend_target: float,
+) -> Tuple[go.Figure, Dict[str, Any]]:
     # ---------------------------------------------------------
     #  0) Vorbereitungen
     # ---------------------------------------------------------
@@ -213,7 +236,12 @@ def create_hours_burndown_chart(
     #  5) Resampling (D/W/Monat)
     # ---------------------------------------------------------
     df_lines = pd.DataFrame(
-        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values, "forecast": forecast_values}
+        {
+            "Datum": all_days,
+            "actual_cum": actual_cum.values,
+            "ideal": ideal_values,
+            "forecast": forecast_values,
+        }
     ).set_index("Datum")
     df_bar = df_bar.set_index("Datum")
 

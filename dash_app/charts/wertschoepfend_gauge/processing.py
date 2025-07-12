@@ -1,9 +1,15 @@
+from typing import Tuple, Dict, Any
+
 import plotly.graph_objects as go
 import pandas as pd
+
 from common import data
+from common.constants import GAUGE_MARGINS
 
 
-def create_gauge_chart(df_grouped, faktura_target):
+def create_gauge_chart(
+    df_grouped: pd.DataFrame, faktura_target: float
+) -> Tuple[go.Figure, Dict[str, Any]]:
     """
     Erzeugt einen Gauge-Chart, der die kumulative wertschöpfende Stunden (in PT) anzeigt.
     """
@@ -20,7 +26,7 @@ def create_gauge_chart(df_grouped, faktura_target):
     )
     gauge_fig.update_layout(
         paper_bgcolor="rgba(255,255,255,0)",
-        margin=dict(t=25, l=50, r=50, b=0),
+        margin=GAUGE_MARGINS,
     )
     config = {"staticPlot": True}
     return gauge_fig, config

@@ -1,10 +1,21 @@
-import plotly.graph_objects as go
+from typing import Tuple, Dict, Any, Optional
 import datetime
+
+import plotly.graph_objects as go
 import pandas as pd
-from common import data
+
+from common import data, utils
+from common.constants import (
+    INTERVAL_CONVERSION,
+    GAUGE_MARGINS,
+    DEFAULT_INDICATOR_HEIGHT,
+    INDICATOR_MARGINS,
+)
 
 
-def create_gauge_chart(df_grouped, faktura_target):
+def create_gauge_chart(
+    df_grouped: pd.DataFrame, faktura_target: float
+) -> Tuple[go.Figure, Dict[str, Any]]:
     """
     Erzeugt einen Gauge-Chart, der die kumulative Faktura (in PT) anzeigt.
     """
@@ -21,15 +32,20 @@ def create_gauge_chart(df_grouped, faktura_target):
     )
     gauge_fig.update_layout(
         paper_bgcolor="rgba(255,255,255,0)",
-        margin=dict(t=25, l=50, r=50, b=0),
+        margin=GAUGE_MARGINS,
     )
-    config = {"staticPlot": True}
+    config = utils.standard_chart_config(static_plot=True)
     return gauge_fig, config
 
 
 def create_daily_average_indicators(
-    df_faktura, df_all, start_date, end_date, interval, faktura_target
-):
+    df_faktura: pd.DataFrame,
+    df_all: pd.DataFrame,
+    start_date: str,
+    end_date: str,
+    interval: str,
+    faktura_target: float,
+) -> Tuple[go.Figure, Dict[str, Any], go.Figure, Dict[str, Any]]:
     """
     Erzeugt zwei Indikatoren:
       - Ø PT pro Intervall (z.B. pro Tag, Woche oder Monat) (Rest zur Zielvorgabe)
@@ -73,10 +89,11 @@ def create_daily_average_indicators(
         daily_needed_pt = 0
 
     # Umrechnung je Intervall (Tag, Woche, Monat)
-    conversion = {"D": (1, "Tag"), "W": (5, "Woche"), "ME": (22, "Monat")}
-    factor, label = conversion.get(interval, (1, "Tag"))
+    factor, label = INTERVAL_CONVERSION.get(interval, (1, "Tag"))
     interval_needed_pt = daily_needed_pt * factor
-    interval_needed_hours = daily_needed_pt * 8 * factor  # 8 Stunden pro PT
+    interval_needed_hours = (
+        daily_needed_pt * utils.HOURS_PER_PT * factor
+    )  # 8 Stunden pro PT
 
     # Erzeuge den PT-Indikator
     fig_pt = go.Figure()
@@ -88,10 +105,10 @@ def create_daily_average_indicators(
             number={"font": {"size": 35}},
         )
     )
+    utils.apply_transparent_background(fig_pt)
     fig_pt.update_layout(
-        height=100,
-        paper_bgcolor="rgba(255,255,255,0)",
-        margin=dict(t=75, l=50, r=50, b=50),
+        height=DEFAULT_INDICATOR_HEIGHT,
+        margin=INDICATOR_MARGINS,
     )
 
     # Erzeuge den Stunden-Indikator
@@ -104,11 +121,11 @@ def create_daily_average_indicators(
             number={"font": {"size": 35}},
         )
     )
+    utils.apply_transparent_background(fig_hours)
     fig_hours.update_layout(
-        height=100,
-        paper_bgcolor="rgba(255,255,255,0)",
-        margin=dict(t=75, l=50, r=50, b=50),
+        height=DEFAULT_INDICATOR_HEIGHT,
+        margin=INDICATOR_MARGINS,
     )
 
-    config = {"staticPlot": True}
+    config = utils.standard_chart_config(static_plot=True)
     return fig_pt, config, fig_hours, config

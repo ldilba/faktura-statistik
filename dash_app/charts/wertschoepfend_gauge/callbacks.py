@@ -1,10 +1,6 @@
-from io import StringIO
-
 from dash import Output, Input, State
-from common import data, charts
+from common import data, charts, utils
 from charts.wertschoepfend_gauge import processing
-
-import pandas as pd
 
 
 def register_callbacks(app):
@@ -19,10 +15,9 @@ def register_callbacks(app):
         State("wertschoepfend-tage", "value"),
     )
     def update_gauge_chart(_, __, data_all, start_date, end_date, wertschoepfend_tage):
-        if not data_all or not data_all["wertschoepfend"]:
+        df_wertschoepfend = utils.deserialize_store_data(data_all, "wertschoepfend")
+        if df_wertschoepfend is None:
             return charts.empty_figure(), {}
-
-        df_wertschoepfend = pd.read_json(StringIO(data_all["wertschoepfend"]))
         df_grouped = data.filter_data_by_date(df_wertschoepfend, start_date, end_date)
         figure, config = processing.create_gauge_chart(
             df_grouped, float(wertschoepfend_tage)
