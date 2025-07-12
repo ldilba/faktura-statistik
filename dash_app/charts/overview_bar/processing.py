@@ -39,6 +39,9 @@ def create_interval_bar_chart(
         df_all, start_date, end_date, interval
     )
 
+    # Berechne PT für Custom Hover
+    df_agg["PT"] = df_agg["Erfasste Menge"] / 8
+
     fig = px.bar(
         df_agg,
         x="ProTime-Datum",
@@ -52,10 +55,19 @@ def create_interval_bar_chart(
         },
         height=utils.DEFAULT_BAR_HEIGHT,
         template=None,
+        custom_data=["PT"],
     )
     utils.apply_transparent_background(fig)
     fig.update_layout(barmode="stack")
-    fig.update_traces(texttemplate="%{y:.2f}", textposition="auto")
+    fig.update_traces(
+        texttemplate="%{y:.2f}",
+        textposition="auto",
+        hovertemplate="<b>%{fullData.name}</b><br>"
+        + "Datum: %{x}<br>"
+        + "Stunden: %{y:.2f} h<br>"
+        + "PT: %{customdata[0]:.2f} PT"
+        + "<extra></extra>",
+    )
 
     config = utils.standard_chart_config(displaylogo=False)
     return fig, config

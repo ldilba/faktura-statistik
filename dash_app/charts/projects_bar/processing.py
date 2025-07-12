@@ -30,7 +30,12 @@ def create_project_bar_chart(
 
     # Texttemplate mit PT und h
     bar_fig.update_traces(
-        texttemplate="%{y:.2f} PT<br>%{customdata[0]:.0f} h", textposition="auto"
+        texttemplate="%{y:.2f} PT<br>%{customdata[0]:.0f} h",
+        textposition="auto",
+        hovertemplate="<b>%{x}</b><br>"
+        + "Faktura: %{y:.2f} PT<br>"
+        + "Faktura: %{customdata[0]:.0f} h"
+        + "<extra></extra>",
     )
 
     config = {"displaylogo": False}
