@@ -443,6 +443,8 @@ def create_hours_burndown_chart(
         for grp in group_order:
             dfg = df_bar_res[df_bar_res["group"] == grp]
             if not dfg.empty:
+                # Berechne Stunden für Hover
+                hours_values = [pt * 8 for pt in dfg["Tatsächliche Wertschöpfung"]]
                 fig.add_trace(
                     go.Bar(
                         x=dfg["Datum"],
@@ -451,9 +453,17 @@ def create_hours_burndown_chart(
                         marker_color=dfg["color"].iloc[0],
                         marker_opacity=dfg["opacity"].tolist(),
                         width=86400000 * 0.9,
+                        customdata=hours_values,
+                        hovertemplate="<b>" + grp + "</b><br>" +
+                                     "Datum: %{x}<br>" +
+                                     "Kumulativ: %{y:.2f} PT<br>" +
+                                     "Kumulativ: %{customdata:.0f} h" +
+                                     "<extra></extra>",
                     )
                 )
     else:
+        # Berechne Stunden für Hover
+        hours_values = [pt * 8 for pt in df_bar_res["Tatsächliche Wertschöpfung"]]
         fig.add_trace(
             go.Bar(
                 x=df_bar_res["Datum"],
@@ -464,6 +474,12 @@ def create_hours_burndown_chart(
                 opacity=0.9,
                 textposition="inside",
                 texttemplate="%{y:.2f} PT",
+                customdata=hours_values,
+                hovertemplate="<b>Kumulierte Wertschöpfung</b><br>" +
+                             "Datum: %{x}<br>" +
+                             "Kumulativ: %{y:.2f} PT<br>" +
+                             "Kumulativ: %{customdata:.0f} h" +
+                             "<extra></extra>",
             )
         )
 
