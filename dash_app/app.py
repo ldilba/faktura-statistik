@@ -25,6 +25,8 @@ external_scripts = [
 pio.templates.default = "plotly_white"
 
 app = Dash(external_scripts=external_scripts)
+app.title = "Faktura Statistik"
+app._favicon = "pie-chart.ico"
 
 # Define the app layout with page content container
 app.layout = html.Div(
