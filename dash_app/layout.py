@@ -165,7 +165,7 @@ def create_layout():
                                     dcc.Input(
                                         value=faktura_target,
                                         id="faktura-tage",
-                                        className="p-2 rounded-md border border-gray-300",
+                                        className="p-2 rounded-md border border-gray-300 w-20",
                                         type="number",
                                         step="0.01",
                                     ),
@@ -176,7 +176,7 @@ def create_layout():
                                     dcc.Input(
                                         value=wertschoepfend_target,
                                         id="wertschoepfend-tage",
-                                        className="p-2 rounded-md border border-gray-300",
+                                        className="p-2 rounded-md border border-gray-300 w-20",
                                         type="number",
                                         step="0.01",
                                     ),
