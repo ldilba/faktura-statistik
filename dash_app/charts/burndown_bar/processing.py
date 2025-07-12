@@ -11,6 +11,7 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
       - Die kumulative tatsächliche wertschöpfende Stunden (in PT) basierend auf df_wertschoepfend.
       - Eine dynamisch berechnete Ideallinie (in PT), unter Berücksichtigung von
         Feiertagen, Urlaub, Krankheit und Wochenenden.
+      - Eine Prognoselinie basierend auf dem ersten und letzten gebuchten Eintrag.
       - Ein DataFrame (df_bar) mit zusätzlichen Informationen (Datum, Tagestyp,
         Farbe, Opacity, Gruppe) zur individuellen Formatierung der Balken im Chart.
     """
@@ -130,7 +131,33 @@ def get_burndown_data(df_wertschoepfend, df_all, start_date, end_date, target=16
         }
     )
 
-    return all_days, actual_cum, ideal_values, df_bar
+    # Prognoselinie berechnen basierend auf tatsächlich gebuchten Daten
+    forecast_values = []
+    if not df_fact.empty:
+        # Finde ersten und letzten tatsächlich gebuchten Tag aus den Originaldaten
+        first_booked_date = df_fact["ProTime-Datum"].min()
+        last_booked_date = df_fact["ProTime-Datum"].max()
+        
+        # Hole kumulative Werte zu diesen Zeitpunkten
+        first_cum_value = actual_cum.loc[first_booked_date] if first_booked_date in actual_cum.index else 0
+        last_cum_value = actual_cum.loc[last_booked_date] if last_booked_date in actual_cum.index else 0
+        
+        if first_booked_date != last_booked_date and last_cum_value > first_cum_value:
+            # Berechne Steigung pro Tag basierend auf tatsächlichen Buchungen
+            days_diff = (last_booked_date - first_booked_date).days
+            daily_slope = (last_cum_value - first_cum_value) / days_diff
+            
+            # Erstelle Prognoselinie für alle Tage
+            for day in all_days:
+                days_from_first = (day - first_booked_date).days
+                forecast_value = first_cum_value + (daily_slope * days_from_first)
+                forecast_values.append(max(0, forecast_value))  # Keine negativen Werte
+        else:
+            forecast_values = [0] * len(all_days)
+    else:
+        forecast_values = [0] * len(all_days)
+
+    return all_days, actual_cum, ideal_values, forecast_values, df_bar
 
 
 def get_fiscal_year_range_for(any_date):
@@ -178,7 +205,7 @@ def create_hours_burndown_chart(
     # ---------------------------------------------------------
     #  4) Burndown-Daten (täglich)
     # ---------------------------------------------------------
-    all_days, actual_cum, ideal_values, df_bar = get_burndown_data(
+    all_days, actual_cum, ideal_values, forecast_values, df_bar = get_burndown_data(
         df_wertschoepfend, df_all, start_date, end_date, target=dynamic_target
     )
 
@@ -186,7 +213,7 @@ def create_hours_burndown_chart(
     #  5) Resampling (D/W/Monat)
     # ---------------------------------------------------------
     df_lines = pd.DataFrame(
-        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values}
+        {"Datum": all_days, "actual_cum": actual_cum.values, "ideal": ideal_values, "forecast": forecast_values}
     ).set_index("Datum")
     df_bar = df_bar.set_index("Datum")
 
@@ -244,6 +271,16 @@ def create_hours_burndown_chart(
             mode="lines",
             name="Ideallinie",
             line=dict(color="red"),
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=df_lines_res["Datum"],
+            y=df_lines_res["forecast"],
+            mode="lines",
+            name="Prognose",
+            line=dict(color="grey", dash="dot"),
         )
     )
 
